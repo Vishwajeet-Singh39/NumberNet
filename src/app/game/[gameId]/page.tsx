@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getGame, joinGame, makeGuess, setSecret, resetGame, requestReset, resolveResetRequest } from '@/lib/game-service';
+import { getGame, joinGame, makeGuess, setSecret, resetGame, requestReset, resolveResetRequest, deleteGame } from '@/lib/game-service';
 import type { Game, Player } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -59,6 +59,11 @@ export default function GamePage() {
             const updatedGame = await getGame(gameId);
             if (updatedGame) {
                 setGame(updatedGame);
+            } else {
+                 // If the game is no longer found, it was likely cleaned up.
+                 // Redirect to home.
+                toast({ title: "Game Over", description: "The game session has ended." });
+                router.push('/');
             }
         }, 2000); // Poll every 2 seconds
 
@@ -78,6 +83,13 @@ export default function GamePage() {
             setResetRequesterName(null);
         }
     }, [game, isHost, playerId]);
+    
+    const handleLeaveGame = async () => {
+        if (isHost) {
+            await deleteGame(gameId);
+        }
+        router.push('/');
+    }
 
     const handleJoinGame = async () => {
         if (!inputValue.trim()) {
@@ -217,8 +229,8 @@ export default function GamePage() {
 
         return (
              <AlertDialogFooter>
-                 {!isHost && <Button variant="outline" onClick={() => router.push('/')}>Leave Game</Button>}
-                 {isHost && <Button variant="outline" onClick={() => router.push('/')}>New Game</Button>}
+                 {!isHost && <Button variant="outline" onClick={handleLeaveGame}>Leave Game</Button>}
+                 {isHost && <Button variant="outline" onClick={handleLeaveGame}>New Game</Button>}
                  <AlertDialogAction onClick={handlePlayAgain}> <RotateCw /> {buttonText} </AlertDialogAction>
             </AlertDialogFooter>
         );
@@ -294,7 +306,7 @@ export default function GamePage() {
                         </DialogContent>
                     </Dialog>
                     {isHost ? (
-                        <Button variant="outline" size="sm" onClick={() => router.push('/')}>New Game</Button>
+                        <Button variant="outline" size="sm" onClick={handleLeaveGame}>New Game</Button>
                     ) : (
                         <Button variant="outline" size="sm" onClick={handleRequestReset}>Request Reset</Button>
                     )}

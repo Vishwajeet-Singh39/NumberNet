@@ -25,4 +25,5 @@ export interface Game {
   turn: string; // Player ID of the current turn
   difficulty: number;
   resetRequestedBy?: string | null; // ID of player who requested a reset mid-game
+  lastActivity: number;
 }

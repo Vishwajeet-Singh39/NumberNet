@@ -5,10 +5,10 @@ import { Game, Player } from './types';
 import { randomUUID } from 'crypto';
 import { calculateBullsAndCows } from './game-logic';
 
-// In-memory store for all games
 const games = new Map<string, Game>();
+const GAME_LIFETIME = 1000 * 60 * 60; // 1 hour in milliseconds
+const CLEANUP_INTERVAL = 1000 * 60 * 5; // 5 minutes in milliseconds
 
-// Simple function to create a unique ID for players
 const createPlayerId = () => `player_${randomUUID()}`;
 const createGameId = () => `game_${randomUUID()}`;
 
@@ -32,6 +32,7 @@ export async function createGame(player1Name: string, difficulty: number): Promi
     turn: player1.id,
     difficulty: difficulty,
     resetRequestedBy: null,
+    lastActivity: Date.now(),
   };
 
   games.set(gameId, newGame);
@@ -63,7 +64,8 @@ export async function joinGame(gameId: string, playerName: string): Promise<{ ga
   };
 
   game.players.push(player2);
-  game.status = 'playing'; // Game starts when player 2 joins
+  game.status = 'playing';
+  game.lastActivity = Date.now();
   
   games.set(gameId, game);
 
@@ -71,7 +73,12 @@ export async function joinGame(gameId: string, playerName: string): Promise<{ ga
 }
 
 export async function getGame(gameId: string): Promise<Game | undefined> {
-  return games.get(gameId);
+  const game = games.get(gameId);
+  if (game) {
+      game.lastActivity = Date.now();
+      games.set(gameId, game);
+  }
+  return game;
 }
 
 export async function setSecret(gameId: string, playerId: string, secret: string): Promise<Game | { error: string }> {
@@ -87,12 +94,12 @@ export async function setSecret(gameId: string, playerId: string, secret: string
 
   player.secretNumber = secret;
 
-  // If both players have set their secrets, the game is truly on.
   const allSecretsSet = game.players.every(p => p.secretNumber);
   if (allSecretsSet) {
     game.status = 'playing';
   }
   
+  game.lastActivity = Date.now();
   games.set(gameId, game);
   return game;
 }
@@ -119,11 +126,12 @@ export async function makeGuess(gameId: string, playerId: string, guess: string)
     if (bulls === game.difficulty) {
         game.status = 'finished';
         game.winnerId = playerId;
-        currentPlayer.score += 1; // Increment winner's score
+        currentPlayer.score += 1;
     } else {
-        game.turn = opponent.id; // Switch turns
+        game.turn = opponent.id;
     }
 
+    game.lastActivity = Date.now();
     games.set(gameId, game);
     return game;
 }
@@ -132,19 +140,18 @@ export async function requestReset(gameId: string, playerId: string): Promise<Ga
   const game = games.get(gameId);
   if (!game) return { error: "Game not found" };
 
-  // Only non-host can request a reset. Host action is immediate.
   const isHost = game.players[0].id === playerId;
   if(isHost) {
      return { error: "Host cannot request a reset, they can reset directly."}
   }
 
   game.resetRequestedBy = playerId;
+  game.lastActivity = Date.now();
   games.set(gameId, game);
   return game;
 }
 
 const performRoundReset = (game: Game): Game => {
-    // Reset secrets, guesses, and winner for a new round
     game.players.forEach(p => {
         p.secretNumber = undefined;
         p.guesses = [];
@@ -152,8 +159,8 @@ const performRoundReset = (game: Game): Game => {
     game.status = 'playing';
     game.winnerId = undefined;
     game.resetRequestedBy = null;
-    // Let player 1 start the new round
     game.turn = game.players[0].id; 
+    game.lastActivity = Date.now();
     return game;
 }
 
@@ -168,6 +175,7 @@ export async function resolveResetRequest(gameId: string, accept: boolean): Prom
         return newGame;
     } else {
         game.resetRequestedBy = null;
+        game.lastActivity = Date.now();
         games.set(gameId, game);
         return game;
     }
@@ -178,21 +186,38 @@ export async function resetGame(gameId: string, playerId: string): Promise<Game 
   const game = games.get(gameId);
   if (!game) return { error: "Game not found" };
   
-  // This function is now only for "Play Again" after a game is finished.
   if (game.status !== 'finished') {
     return { error: 'Game is not finished yet.' };
   }
 
-  // If the other player has already requested a reset, reset the game.
   if(game.resetRequestedBy && game.resetRequestedBy !== playerId) {
     const newGame = performRoundReset(game);
     games.set(gameId, newGame);
     return newGame;
   }
   
-  // This is the first player to request "Play Again".
   game.resetRequestedBy = playerId;
+  game.lastActivity = Date.now();
   games.set(gameId, game);
-  return game; // Wait for the other player
+  return game;
 }
 
+export async function deleteGame(gameId: string): Promise<{ success: boolean }> {
+    if (games.has(gameId)) {
+        games.delete(gameId);
+        return { success: true };
+    }
+    return { success: false };
+}
+
+function cleanupInactiveGames() {
+    const now = Date.now();
+    for (const [gameId, game] of games.entries()) {
+        if (now - game.lastActivity > GAME_LIFETIME) {
+            games.delete(gameId);
+            console.log(`Cleaned up inactive game: ${gameId}`);
+        }
+    }
+}
+
+setInterval(cleanupInactiveGames, CLEANUP_INTERVAL);
