@@ -40,9 +40,9 @@ export function GuessHistory({ guesses }: GuessHistoryProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {guesses.slice().reverse().map((g, index) => (
-              <TableRow key={index} className={index === 0 ? "animate-in fade-in-20 slide-in-from-bottom-2 duration-500" : ""}>
-                <TableCell className="font-medium text-center">{guesses.length - index}</TableCell>
+            {guesses.map((g, index) => (
+              <TableRow key={index} className={index === guesses.length -1 ? "animate-in fade-in-20 slide-in-from-bottom-2 duration-500" : ""}>
+                <TableCell className="font-medium text-center">{index + 1}</TableCell>
                 <TableCell>
                   <div className="flex flex-nowrap gap-1 md:gap-2 font-mono tracking-widest">
                     {g.guess.split('').map((digit, i) => (
@@ -74,6 +74,7 @@ export function GuessHistory({ guesses }: GuessHistoryProps) {
         </Table>
       </div>
       <ScrollBar orientation="vertical" />
+      <ScrollBar orientation="horizontal" />
     </ScrollArea>
   );
 }
