@@ -1,15 +1,16 @@
+
 'use server';
 
 import { Game, Player } from './types';
 import { calculateBullsAndCows } from './game-logic';
+import { randomUUID } from 'crypto';
 
 const games = new Map<string, Game>();
 const GAME_LIFETIME = 1000 * 60 * 60; // 1 hour in milliseconds
 const CLEANUP_INTERVAL = 1000 * 60 * 5; // 5 minutes in milliseconds
 
-const simpleId = () => Math.random().toString(36).substring(2, 9);
-const createPlayerId = () => `player_${simpleId()}`;
-const createGameId = () => `game_${simpleId()}`;
+const createPlayerId = () => `player_${randomUUID()}`;
+const createGameId = () => `game_${randomUUID()}`;
 
 // --- Game Management Functions ---
 
@@ -185,11 +186,14 @@ export async function resetGame(gameId: string, playerId: string): Promise<Game 
   const game = games.get(gameId);
   if (!game) return { error: "Game not found" };
   
-  if (game.status !== 'finished') {
-    return { error: 'Game is not finished yet.' };
-  }
+  const iAmRequesting = game.resetRequestedBy === playerId;
+  const opponentHasRequested = game.resetRequestedBy && game.resetRequestedBy !== playerId;
 
-  if(game.resetRequestedBy && game.resetRequestedBy !== playerId) {
+  if (game.status !== 'finished' && !opponentHasRequested) {
+      return { error: 'Game is not finished yet.' };
+  }
+  
+  if(opponentHasRequested) {
     const newGame = performRoundReset(game);
     games.set(gameId, newGame);
     return newGame;

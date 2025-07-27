@@ -56,14 +56,17 @@ export default function GamePage() {
         fetchGame();
 
         const interval = setInterval(async () => {
-            const updatedGame = await getGame(gameId);
-            if (updatedGame) {
-                setGame(updatedGame);
-            } else {
-                 // If the game is no longer found, it was likely cleaned up.
-                 // Redirect to home.
-                toast({ title: "Game Over", description: "The game session has ended." });
-                router.push('/');
+            try {
+                const updatedGame = await getGame(gameId);
+                if (updatedGame) {
+                    setGame(updatedGame);
+                } else {
+                    toast({ title: "Game Over", description: "The game session has ended." });
+                    router.push('/');
+                    clearInterval(interval); 
+                }
+            } catch (error) {
+                console.error("Failed to poll for game state:", error);
             }
         }, 2000); // Poll every 2 seconds
 
@@ -141,6 +144,18 @@ export default function GamePage() {
 
     const handleRequestReset = async () => {
         if(!playerId) return;
+        
+        if(isHost) {
+            const result = await resolveResetRequest(gameId, true);
+             if ('error' in result) {
+                toast({ title: 'Error', description: result.error, variant: 'destructive' });
+            } else {
+                setGame(result);
+                 toast({ title: 'Round Reset', description: 'The round has been reset.' });
+            }
+            return;
+        }
+
         const result = await requestReset(gameId, playerId);
          if ('error' in result) {
             toast({ title: 'Error', description: result.error, variant: 'destructive' });
@@ -218,8 +233,10 @@ export default function GamePage() {
     }
     
     const renderGameOverContent = () => {
-        const iHaveRequested = game?.resetRequestedBy === playerId;
-        const opponentHasRequested = game?.resetRequestedBy && game.resetRequestedBy !== playerId;
+        if (!game || game.status !== 'finished') return null;
+
+        const iHaveRequested = game.resetRequestedBy === playerId;
+        const opponentHasRequested = game.resetRequestedBy && game.resetRequestedBy !== playerId;
 
         if (iHaveRequested && !opponentHasRequested) {
              return <p className="text-center text-muted-foreground">Waiting for {opponent?.name || 'opponent'} to play again...</p>;
@@ -228,13 +245,19 @@ export default function GamePage() {
         const buttonText = opponentHasRequested ? "Accept & Play Again" : "Play Again";
 
         return (
-             <AlertDialogFooter>
-                 {!isHost && <Button variant="outline" onClick={handleLeaveGame}>Leave Game</Button>}
-                 {isHost && <Button variant="outline" onClick={handleLeaveGame}>New Game</Button>}
-                 <AlertDialogAction onClick={handlePlayAgain}> <RotateCw /> {buttonText} </AlertDialogAction>
-            </AlertDialogFooter>
+             <>
+                <div className="flex justify-center items-center gap-4 mt-4">
+                    <Button variant="outline" onClick={handleLeaveGame}>
+                        {isHost ? 'End Game' : 'Leave Game'}
+                    </Button>
+                    <Button onClick={handlePlayAgain}>
+                        <RotateCw className="mr-2 h-4 w-4" /> {buttonText}
+                    </Button>
+                </div>
+            </>
         );
     }
+
 
     return (
         <main className="container mx-auto p-4 md:p-8 min-h-screen flex flex-col">
@@ -306,9 +329,9 @@ export default function GamePage() {
                         </DialogContent>
                     </Dialog>
                     {isHost ? (
-                        <Button variant="outline" size="sm" onClick={handleLeaveGame}>New Game</Button>
+                        <Button variant="destructive" size="sm" onClick={handleLeaveGame}>End Game</Button>
                     ) : (
-                        <Button variant="outline" size="sm" onClick={handleRequestReset}>Request Reset</Button>
+                         <Button variant="outline" size="sm" onClick={handleRequestReset}>Request Reset</Button>
                     )}
                 </div>
             </header>
@@ -378,6 +401,8 @@ export default function GamePage() {
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     {renderGameOverContent()}
+                     <AlertDialogFooter>
+                    </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
              <AlertDialog open={!!resetRequesterName}>
