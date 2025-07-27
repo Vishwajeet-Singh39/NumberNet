@@ -4,32 +4,15 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getGame, joinGame, makeGuess, setSecret, resetGame } from '@/lib/game-service';
-import type { Game, Player, Guess } from '@/lib/types';
+import type { Game, Player } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Link, Clipboard, User, KeyRound, Target, Hourglass, Trophy, BrainCircuit, RotateCw } from 'lucide-react';
+import { GuessHistory } from '@/components/guess-history';
 
-function GuessHistory({ guesses }: { guesses: Guess[] }) {
-    if (guesses.length === 0) {
-        return <p className="text-sm text-muted-foreground text-center mt-4">No guesses yet.</p>;
-    }
-    return (
-        <div className="space-y-2 mt-4">
-            {guesses.map((g, i) => (
-                <div key={i} className="flex justify-between items-center bg-muted/50 p-2 rounded-md">
-                    <p className="font-mono">{g.guess}</p>
-                    <div className="flex gap-2">
-                        <span className="font-bold text-primary">Bulls: {g.bulls}</span>
-                        <span className="font-bold text-accent">Cows: {g.cows}</span>
-                    </div>
-                </div>
-            )).reverse()}
-        </div>
-    );
-}
 
 export default function GamePage() {
     const { gameId } = useParams() as { gameId: string };

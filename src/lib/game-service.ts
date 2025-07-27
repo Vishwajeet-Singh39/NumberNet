@@ -3,6 +3,7 @@
 
 import { Game, Player } from './types';
 import { randomUUID } from 'crypto';
+import { calculateBullsAndCows } from './game-logic';
 
 // In-memory store for all games
 const games = new Map<string, Game>();
@@ -13,7 +14,7 @@ const createGameId = () => `game_${randomUUID()}`;
 
 // --- Game Management Functions ---
 
-export async function createGame(player1Name: string): Promise<{ gameId: string; playerId: string }> {
+export async function createGame(player1Name: string, difficulty: number): Promise<{ gameId: string; playerId: string }> {
   const gameId = createGameId();
   const playerId = createPlayerId();
 
@@ -28,7 +29,7 @@ export async function createGame(player1Name: string): Promise<{ gameId: string;
     players: [player1],
     status: 'waiting',
     turn: player1.id,
-    difficulty: 4, // Default difficulty
+    difficulty: difficulty,
   };
 
   games.set(gameId, newGame);
@@ -132,33 +133,4 @@ export async function resetGame(gameId: string): Promise<Game | {error: string}>
   
   games.set(gameId, game);
   return game;
-}
-
-// --- Helper Functions ---
-function calculateBullsAndCows(secret: string, guess: string) {
-    let bulls = 0;
-    let cows = 0;
-    const secretFreq: Record<string, number> = {};
-    const guessFreq: Record<string, number> = {};
-    const feedback: any[] = Array(secret.length).fill('absent');
-
-    for (let i = 0; i < secret.length; i++) {
-        if (secret[i] === guess[i]) {
-            bulls++;
-            feedback[i] = 'correct';
-        } else {
-            secretFreq[secret[i]] = (secretFreq[secret[i]] || 0) + 1;
-            guessFreq[guess[i]] = (guessFreq[guess[i]] || 0) + 1;
-        }
-    }
-
-    for (const digit in guessFreq) {
-        if (secretFreq[digit]) {
-            cows += Math.min(guessFreq[digit], secretFreq[digit]);
-        }
-    }
-    
-    // This part of feedback is simplified for the online version
-    // A more detailed feedback can be implemented if needed
-    return { bulls, cows, feedback };
 }
