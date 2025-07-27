@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { Link, Clipboard, User, KeyRound, Target, Hourglass, Trophy, BrainCircuit, RotateCw, Award } from 'lucide-react';
+import { Link, Clipboard, User, KeyRound, Target, Hourglass, Trophy, BrainCircuit, RotateCw, Award, BookOpen } from 'lucide-react';
 import { GuessHistory } from '@/components/guess-history';
 import { Scoreboard } from '@/components/scoreboard';
 
@@ -26,6 +26,7 @@ export default function GamePage() {
     const [inputValue, setInputValue] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [isScoreboardOpen, setIsScoreboardOpen] = useState(false);
+    const [isRulesOpen, setIsRulesOpen] = useState(false);
 
     useEffect(() => {
         const id = localStorage.getItem(`player_id_for_${gameId}`);
@@ -212,6 +213,37 @@ export default function GamePage() {
                                     <Button type="button" variant="secondary">
                                     Close
                                     </Button>
+                                </DialogClose>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                    <Dialog open={isRulesOpen} onOpenChange={setIsRulesOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" size="sm"><BookOpen /> How to Play</Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>How to Play NumberNet</DialogTitle>
+                            </DialogHeader>
+                             <div className="space-y-4 text-sm text-muted-foreground">
+                                <p><strong className="text-foreground">Objective:</strong> Be the first to guess your opponent's secret number!</p>
+                                
+                                <ol className="list-decimal list-inside space-y-2">
+                                    <li><strong>Set Your Secret:</strong> Both players begin by setting a secret number. The length depends on the difficulty you chose.</li>
+                                    <li><strong>Take Turns Guessing:</strong> Players take turns guessing the other's secret number.</li>
+                                    <li><strong>Use The Feedback:</strong> After each guess, you'll get feedback in two forms:
+                                        <ul className="list-disc list-inside pl-4 mt-2 space-y-1">
+                                            <li><strong className="text-foreground">Bulls (Correct):</strong> This means you guessed a correct digit in the exact correct position.</li>
+                                            <li><strong className="text-foreground">Cows (Present):</strong> This means you guessed a correct digit, but it is in the wrong position.</li>
+                                            <li><strong className="text-foreground">Absent:</strong> The digit is not in the secret number at all.</li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>Win the Round:</strong> The first player to guess the opponent's number (getting all "Bulls") wins the round and gets one point!</li>
+                                </ol>
+                            </div>
+                            <DialogFooter>
+                                <DialogClose asChild>
+                                    <Button type="button">Got it!</Button>
                                 </DialogClose>
                             </DialogFooter>
                         </DialogContent>
