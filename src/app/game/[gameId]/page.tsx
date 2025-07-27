@@ -10,7 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Link, Clipboard, User, KeyRound, Target, Hourglass, Trophy, BrainCircuit, RotateCw } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Link, Clipboard, User, KeyRound, Target, Hourglass, Trophy, BrainCircuit, RotateCw, Award } from 'lucide-react';
 import { GuessHistory } from '@/components/guess-history';
 import { Scoreboard } from '@/components/scoreboard';
 
@@ -24,6 +25,7 @@ export default function GamePage() {
     const [playerId, setPlayerId] = useState<string | null>(null);
     const [inputValue, setInputValue] = useState('');
     const [isLoading, setIsLoading] = useState(true);
+    const [isScoreboardOpen, setIsScoreboardOpen] = useState(false);
 
     useEffect(() => {
         const id = localStorage.getItem(`player_id_for_${gameId}`);
@@ -186,14 +188,34 @@ export default function GamePage() {
                     </h1>
                 </div>
                  <div className="flex items-center gap-4">
-                    {me && opponent && (
-                        <Scoreboard 
-                            player1Name={me.name}
-                            player1Score={me.score}
-                            player2Name={opponent.name}
-                            player2Score={opponent.score}
-                        />
-                    )}
+                     <Dialog open={isScoreboardOpen} onOpenChange={setIsScoreboardOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" size="sm"><Award /> Score</Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Scoreboard</DialogTitle>
+                                <DialogDescription>
+                                    Current game scores. The winner of a round gets one point.
+                                </DialogDescription>
+                            </DialogHeader>
+                            {me && opponent && (
+                                <Scoreboard 
+                                    player1Name={me.name}
+                                    player1Score={me.score}
+                                    player2Name={opponent.name}
+                                    player2Score={opponent.score}
+                                />
+                            )}
+                            <DialogFooter>
+                                <DialogClose asChild>
+                                    <Button type="button" variant="secondary">
+                                    Close
+                                    </Button>
+                                </DialogClose>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
                     <Button variant="outline" size="sm" onClick={() => router.push('/')}>New Game</Button>
                 </div>
             </header>
@@ -271,3 +293,5 @@ export default function GamePage() {
         </main>
     );
 }
+
+    

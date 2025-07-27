@@ -12,20 +12,22 @@ interface ScoreboardProps {
 
 export function Scoreboard({ player1Name, player2Name, player1Score, player2Score }: ScoreboardProps) {
   return (
-    <Card className="min-w-[200px] border-2">
-      <CardContent className="p-2">
+    <Card className="w-full border-2">
+      <CardContent className="p-4">
         <div className="flex justify-around items-center text-center">
           <div className="w-1/2">
-            <p className="font-semibold text-sm truncate" title={player1Name}>{player1Name}</p>
-            <p className="text-2xl font-bold text-primary">{player1Score}</p>
+            <p className="font-semibold text-lg truncate" title={player1Name}>{player1Name}</p>
+            <p className="text-4xl font-bold text-primary">{player1Score}</p>
           </div>
-          <div className="text-xl font-bold text-muted-foreground">-</div>
+          <div className="text-2xl font-bold text-muted-foreground">-</div>
           <div className="w-1/2">
-            <p className="font-semibold text-sm truncate" title={player2Name}>{player2Name}</p>
-            <p className="text-2xl font-bold text-primary">{player2Score}</p>
+            <p className="font-semibold text-lg truncate" title={player2Name}>{player2Name}</p>
+            <p className="text-4xl font-bold text-primary">{player2Score}</p>
           </div>
         </div>
       </CardContent>
     </Card>
   );
 }
+
+    
