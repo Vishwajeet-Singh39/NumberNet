@@ -1,4 +1,6 @@
 
+// This component is not used in the online multiplayer version.
+// It is kept in the codebase for reference or potential future use in a local mode.
 'use client';
 
 import { useForm } from 'react-hook-form';
