@@ -87,6 +87,7 @@ export default function Home() {
         <CardContent>
           <form onSubmit={handleStartGame} className="flex flex-col items-center gap-4">
             <Input 
+              type="text"
               placeholder="Player 1 Name" 
               value={player1Name}
               onChange={(e) => setPlayer1Name(e.target.value)}
@@ -94,6 +95,7 @@ export default function Home() {
               className="flex-grow"
             />
             <Input 
+              type="text"
               placeholder="Player 2 Name" 
               value={player2Name}
               onChange={(e) => setPlayer2Name(e.target.value)}
