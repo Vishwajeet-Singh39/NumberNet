@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -14,7 +15,8 @@ import type { Guess } from '@/lib/types';
 
 interface GamePanelProps {
   playerNumber: 1 | 2;
-  opponentPlayerNumber: 1 | 2;
+  playerName: string;
+  opponentPlayerName: string;
   onSetSecret: (secret: string) => void;
   onGuess: (guess: string) => void;
   mySecret: string | null;
@@ -25,7 +27,8 @@ interface GamePanelProps {
 
 export function GamePanel({
   playerNumber,
-  opponentPlayerNumber,
+  playerName,
+  opponentPlayerName,
   onSetSecret,
   onGuess,
   mySecret,
@@ -56,9 +59,9 @@ export function GamePanel({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <KeyRound className="text-primary" />
-          Player {playerNumber}: Set Your Secret
+          {playerName}: Set Your Secret
         </CardTitle>
-        <CardDescription>Enter a 4-digit secret number for Player {opponentPlayerNumber} to guess.</CardDescription>
+        <CardDescription>Enter a 4-digit secret number for {opponentPlayerName} to guess.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -88,17 +91,17 @@ export function GamePanel({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Target className="text-primary"/>
-          Player {playerNumber}: Make a Guess
+          {playerName}: Make a Guess
         </CardTitle>
         <CardDescription>
-          Your secret is set. Now, guess Player {opponentPlayerNumber}'s 4-digit number.
+          Your secret is set. Now, guess {opponentPlayerName}'s 4-digit number.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow flex flex-col gap-4">
         {!opponentSecretSet ? (
           <div className="flex-grow flex flex-col items-center justify-center bg-muted/50 rounded-md p-4 text-center">
             <Hourglass className="h-8 w-8 text-muted-foreground mb-2" />
-            <p className="font-medium text-muted-foreground">Waiting for Player {opponentPlayerNumber} to set their secret number...</p>
+            <p className="font-medium text-muted-foreground">Waiting for {opponentPlayerName} to set their secret number...</p>
           </div>
         ) : isGameOver ? (
            <div className="flex-grow flex flex-col items-center justify-center bg-muted/50 rounded-md p-4 text-center">
