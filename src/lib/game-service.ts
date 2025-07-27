@@ -3,14 +3,15 @@
 
 import { Game, Player } from './types';
 import { calculateBullsAndCows } from './game-logic';
-import { randomUUID } from 'crypto';
 
 const games = new Map<string, Game>();
 const GAME_LIFETIME = 1000 * 60 * 60; // 1 hour in milliseconds
 const CLEANUP_INTERVAL = 1000 * 60 * 5; // 5 minutes in milliseconds
 
-const createPlayerId = () => `player_${randomUUID()}`;
-const createGameId = () => `game_${randomUUID()}`;
+const createId = () => Math.random().toString(36).substring(2, 9);
+const createPlayerId = () => `player_${createId()}`;
+const createGameId = () => `game_${createId()}`;
+
 
 // --- Game Management Functions ---
 
