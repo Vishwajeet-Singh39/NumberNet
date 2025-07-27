@@ -18,10 +18,11 @@ export interface Player {
 }
 
 export interface Game {
-  id: string;
+  id:string;
   players: Player[];
   status: 'waiting' | 'playing' | 'finished';
   winnerId?: string;
   turn: string; // Player ID of the current turn
   difficulty: number;
+  resetRequestedBy?: string | null; // ID of player who requested a reset mid-game
 }

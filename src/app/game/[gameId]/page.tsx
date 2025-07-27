@@ -3,15 +3,15 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getGame, joinGame, makeGuess, setSecret, resetGame } from '@/lib/game-service';
+import { getGame, joinGame, makeGuess, setSecret, resetGame, requestReset, resolveResetRequest } from '@/lib/game-service';
 import type { Game, Player } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { Link, Clipboard, User, KeyRound, Target, Hourglass, Trophy, BrainCircuit, RotateCw, Award, BookOpen } from 'lucide-react';
+import { Link, Clipboard, User, KeyRound, Target, Hourglass, Trophy, BrainCircuit, RotateCw, Award, BookOpen, AlertTriangle } from 'lucide-react';
 import { GuessHistory } from '@/components/guess-history';
 import { Scoreboard } from '@/components/scoreboard';
 
@@ -27,6 +27,7 @@ export default function GamePage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isScoreboardOpen, setIsScoreboardOpen] = useState(false);
     const [isRulesOpen, setIsRulesOpen] = useState(false);
+    const [resetRequesterName, setResetRequesterName] = useState<string | null>(null);
 
     useEffect(() => {
         const id = localStorage.getItem(`player_id_for_${gameId}`);
@@ -67,6 +68,15 @@ export default function GamePage() {
     const me = useMemo(() => game?.players.find(p => p.id === playerId), [game, playerId]);
     const opponent = useMemo(() => game?.players.find(p => p.id !== playerId), [game, playerId]);
     const isHost = useMemo(() => game?.players[0]?.id === playerId, [game, playerId]);
+
+     useEffect(() => {
+        if (game?.resetRequestedBy && isHost && game.resetRequestedBy !== playerId) {
+            const requester = game.players.find(p => p.id === game.resetRequestedBy);
+            setResetRequesterName(requester?.name || 'Your opponent');
+        } else {
+            setResetRequesterName(null);
+        }
+    }, [game, isHost, playerId]);
 
     const handleJoinGame = async () => {
         if (!inputValue.trim()) {
@@ -114,8 +124,29 @@ export default function GamePage() {
         setInputValue('');
     }
     
-    const handleResetGame = async () => {
-        const result = await resetGame(gameId);
+    const handlePlayAgain = async () => {
+        if (!playerId) return;
+        const result = await resetGame(gameId, playerId);
+        if ('error' in result) {
+            toast({ title: 'Error', description: result.error, variant: 'destructive' });
+        } else {
+            setGame(result);
+        }
+    }
+
+    const handleRequestReset = async () => {
+        if(!playerId) return;
+        const result = await requestReset(gameId, playerId);
+         if ('error' in result) {
+            toast({ title: 'Error', description: result.error, variant: 'destructive' });
+        } else {
+            setGame(result);
+            toast({ title: 'Request Sent', description: 'Your request to reset the round has been sent to the host.' });
+        }
+    }
+    
+    const handleResolveResetRequest = async (accept: boolean) => {
+        const result = await resolveResetRequest(gameId, accept);
         if ('error' in result) {
             toast({ title: 'Error', description: result.error, variant: 'destructive' });
         } else {
@@ -177,6 +208,24 @@ export default function GamePage() {
                     </CardContent>
                 </Card>
             </div>
+        );
+    }
+    
+    const renderGameOverContent = () => {
+        const waitingForOtherPlayer = game?.resetRequestedBy && game.resetRequestedBy !== playerId;
+        const requestedByMe = game?.resetRequestedBy === playerId;
+
+        if (requestedByMe && !waitingForOtherPlayer) {
+             return <p className="text-center text-muted-foreground">Waiting for {opponent?.name} to play again...</p>
+        }
+
+        return (
+             <AlertDialogFooter>
+                {isHost && (
+                     <Button variant="outline" onClick={() => router.push('/')}>New Game</Button>
+                )}
+                 <AlertDialogAction onClick={handlePlayAgain}> <RotateCw /> Play Again </AlertDialogAction>
+            </AlertDialogFooter>
         );
     }
 
@@ -249,7 +298,11 @@ export default function GamePage() {
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>
-                    <Button variant="outline" size="sm" onClick={() => router.push('/')}>New Game</Button>
+                    {isHost ? (
+                        <Button variant="outline" size="sm" onClick={() => router.push('/')}>New Game</Button>
+                    ) : (
+                        <Button variant="outline" size="sm" onClick={handleRequestReset}>Request Reset</Button>
+                    )}
                 </div>
             </header>
             
@@ -314,14 +367,23 @@ export default function GamePage() {
                     <AlertDialogHeader>
                         <AlertDialogTitle className="flex items-center gap-2"><Trophy className="text-accent" />Game Over!</AlertDialogTitle>
                         <AlertDialogDescription>
-                            {game?.winnerId === me.id ? "Congratulations, you are the winner!" : `${opponent?.name} has won the game.`}
+                             {game?.winnerId === me.id ? "Congratulations, you are the winner!" : `${opponent?.name || 'Your opponent'} has won the game.`}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    {renderGameOverContent()}
+                </AlertDialogContent>
+            </AlertDialog>
+             <AlertDialog open={!!resetRequesterName}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2"><AlertTriangle className="text-accent" />Reset Request</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {resetRequesterName} wants to reset the round. Do you agree? This will restart the current round without changing the score.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <Button variant="outline" onClick={() => router.push('/')}>New Game</Button>
-                        {isHost && (
-                            <AlertDialogAction onClick={handleResetGame}> <RotateCw /> Play Again </AlertDialogAction>
-                        )}
+                        <AlertDialogCancel onClick={() => handleResolveResetRequest(false)}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleResolveResetRequest(true)}>Reset Round</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

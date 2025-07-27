@@ -31,6 +31,7 @@ export async function createGame(player1Name: string, difficulty: number): Promi
     status: 'waiting',
     turn: player1.id,
     difficulty: difficulty,
+    resetRequestedBy: null,
   };
 
   games.set(gameId, newGame);
@@ -120,9 +121,54 @@ export async function makeGuess(gameId: string, playerId: string, guess: string)
     return game;
 }
 
-export async function resetGame(gameId: string): Promise<Game | {error: string}> {
+export async function requestReset(gameId: string, playerId: string): Promise<Game | {error: string}> {
   const game = games.get(gameId);
   if (!game) return { error: "Game not found" };
+
+  const isHost = game.players[0].id === playerId;
+
+  if(isHost) {
+    // Host can reset directly
+    return resetGame(gameId, playerId);
+  }
+
+  // Player 2 requests a reset
+  game.resetRequestedBy = playerId;
+  games.set(gameId, game);
+  return game;
+}
+
+export async function resolveResetRequest(gameId: string, accept: boolean): Promise<Game | {error: string}> {
+    const game = games.get(gameId);
+    if (!game) return { error: "Game not found" };
+
+    if(accept) {
+        return resetGame(gameId, game.players[0].id);
+    } else {
+        game.resetRequestedBy = null;
+        games.set(gameId, game);
+        return game;
+    }
+}
+
+
+export async function resetGame(gameId: string, playerId: string): Promise<Game | {error: string}> {
+  const game = games.get(gameId);
+  if (!game) return { error: "Game not found" };
+  
+  // Logic to handle "Play Again" after game is finished
+  if(game.status === 'finished') {
+      if(game.resetRequestedBy && game.resetRequestedBy !== playerId) {
+          // The other player has already requested a reset, so now we reset.
+          game.resetRequestedBy = null; // Clear the request
+      } else {
+          // This is the first player to request a reset.
+          game.resetRequestedBy = playerId;
+          games.set(gameId, game);
+          return game; // Wait for the other player
+      }
+  }
+
 
   // Reset secrets, guesses, and winner for a new round
   game.players.forEach(p => {
@@ -131,6 +177,7 @@ export async function resetGame(gameId: string): Promise<Game | {error: string}>
   });
   game.status = 'playing';
   game.winnerId = undefined;
+  game.resetRequestedBy = null;
   // Let player 1 start the new round
   game.turn = game.players[0].id; 
   
