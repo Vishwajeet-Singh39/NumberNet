@@ -49,17 +49,28 @@ export default function GamePage() {
     useEffect(() => {
         if (!gameId) return;
 
+        const fetchGame = async () => {
+            try {
+                const initialGame = await getGame(gameId);
+                if (initialGame) {
+                    setGame(initialGame);
+                } else {
+                    toast({ title: "Error", description: "Game not found.", variant: 'destructive' });
+                    router.push('/');
+                }
+            } catch (error) {
+                 toast({ title: "Error", description: "Failed to fetch game.", variant: 'destructive' });
+                 router.push('/');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchGame();
+
         const interval = setInterval(async () => {
             const updatedGame = await getGame(gameId);
             if (updatedGame) {
                 setGame(updatedGame);
-                 if (updatedGame.status !== 'waiting') {
-                    setIsLoading(false);
-                }
-            } else {
-                 toast({ title: "Error", description: "Game not found.", variant: 'destructive' });
-                 router.push('/');
-                 clearInterval(interval);
             }
         }, 2000); // Poll every 2 seconds
 
