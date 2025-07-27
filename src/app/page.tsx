@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createGame } from '@/lib/game-service';
 import { useToast } from '@/hooks/use-toast';
 
@@ -77,19 +77,18 @@ export default function Home() {
 
                <div className="flex flex-col gap-2">
                 <Label>Difficulty (Number Length)</Label>
-                <RadioGroup
-                  defaultValue="4"
-                  value={difficulty}
-                  onValueChange={setDifficulty}
-                  className="grid grid-cols-2 gap-4"
-                >
-                  {['3', '4', '5', '6'].map((level) => (
-                    <div key={level} className="flex items-center space-x-2">
-                      <RadioGroupItem value={level} id={`r${level}`} />
-                      <Label htmlFor={`r${level}`} className="font-normal">{level} Digits</Label>
-                    </div>
-                  ))}
-                </RadioGroup>
+                 <Select value={difficulty} onValueChange={setDifficulty}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select difficulty" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {Array.from({ length: 11 }, (_, i) => i + 2).map((level) => (
+                            <SelectItem key={level} value={String(level)}>
+                                {level} Digits
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
               </div>
               
               <Button type="submit" className="w-full" disabled={isCreating}>
