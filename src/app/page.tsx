@@ -27,8 +27,8 @@ export default function Home() {
 
   const handleP1Guess = (guess: string) => {
     if (!player2Secret) return;
-    const { bulls, cows } = calculateBullsAndCows(player2Secret, guess);
-    setPlayer1Guesses(prev => [...prev, { guess, bulls, cows }]);
+    const { bulls, cows, feedback } = calculateBullsAndCows(player2Secret, guess);
+    setPlayer1Guesses(prev => [...prev, { guess, bulls, cows, feedback }]);
     if (bulls === 4) {
       setWinner(1);
     }
@@ -36,8 +36,8 @@ export default function Home() {
 
   const handleP2Guess = (guess: string) => {
     if (!player1Secret) return;
-    const { bulls, cows } = calculateBullsAndCows(player1Secret, guess);
-    setPlayer2Guesses(prev => [...prev, { guess, bulls, cows }]);
+    const { bulls, cows, feedback } = calculateBullsAndCows(player1Secret, guess);
+    setPlayer2Guesses(prev => [...prev, { guess, bulls, cows, feedback }]);
     if (bulls === 4) {
       setWinner(2);
     }

@@ -1,33 +1,39 @@
-export const calculateBullsAndCows = (secret: string, guess: string): { bulls: number; cows: number } => {
+import type { DigitFeedback } from "./types";
+
+export const calculateBullsAndCows = (secret: string, guess: string): { bulls: number; cows: number; feedback: DigitFeedback[] } => {
   let bulls = 0;
   let cows = 0;
+  const feedback: DigitFeedback[] = Array(4).fill('absent');
 
   if (secret.length !== 4 || guess.length !== 4) {
-    return { bulls: 0, cows: 0 };
+    return { bulls: 0, cows: 0, feedback: [] };
   }
 
   const secretFreq: { [key: string]: number } = {};
-  const guessFreq: { [key: string]: number } = {};
-  
-  const secretChars = secret.split('');
   const guessChars = guess.split('');
+  const secretChars = secret.split('');
 
-  // First pass for bulls and frequency counts of non-bulls
-  for (let i = 0; i < secretChars.length; i++) {
-    if (secretChars[i] === guessChars[i]) {
+  // First pass for bulls (correct digit in correct position)
+  for (let i = 0; i < 4; i++) {
+    if (guessChars[i] === secretChars[i]) {
       bulls++;
+      feedback[i] = 'correct';
     } else {
+      // Store frequency of non-bull secret digits
       secretFreq[secretChars[i]] = (secretFreq[secretChars[i]] || 0) + 1;
-      guessFreq[guessChars[i]] = (guessFreq[guessChars[i]] || 0) + 1;
     }
   }
 
-  // Second pass for cows
-  for (const digit in guessFreq) {
-    if (secretFreq[digit]) {
-      cows += Math.min(guessFreq[digit], secretFreq[digit]);
+  // Second pass for cows (correct digit in wrong position)
+  for (let i = 0; i < 4; i++) {
+    if (feedback[i] !== 'correct') { // Only check non-bulls
+      if (secretFreq[guessChars[i]] && secretFreq[guessChars[i]] > 0) {
+        cows++;
+        feedback[i] = 'present';
+        secretFreq[guessChars[i]]--; // Decrement frequency to avoid double counting
+      }
     }
   }
 
-  return { bulls, cows };
+  return { bulls, cows, feedback };
 };

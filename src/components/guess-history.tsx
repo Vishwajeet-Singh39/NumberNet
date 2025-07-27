@@ -4,10 +4,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import type { Guess } from '@/lib/types';
 import { ScrollArea } from './ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 interface GuessHistoryProps {
   guesses: Guess[];
 }
+
+const feedbackStyles = {
+  correct: 'bg-green-500 text-white border-green-600',
+  present: 'bg-yellow-500 text-white border-yellow-600',
+  absent: 'bg-muted text-muted-foreground border-border',
+};
+
 
 export function GuessHistory({ guesses }: GuessHistoryProps) {
   if (guesses.length === 0) {
@@ -33,7 +41,21 @@ export function GuessHistory({ guesses }: GuessHistoryProps) {
           {guesses.map((g, index) => (
             <TableRow key={index} className={index === guesses.length - 1 ? "animate-in fade-in-20 slide-in-from-bottom-2 duration-500" : ""}>
               <TableCell className="font-medium">{index + 1}</TableCell>
-              <TableCell className="font-mono tracking-widest">{g.guess}</TableCell>
+              <TableCell>
+                <div className="flex gap-2 font-mono tracking-widest">
+                  {g.guess.split('').map((digit, i) => (
+                    <span 
+                      key={i} 
+                      className={cn(
+                        "flex items-center justify-center w-8 h-8 rounded-md border text-lg font-bold",
+                        g.feedback && g.feedback[i] ? feedbackStyles[g.feedback[i]] : 'bg-muted'
+                      )}
+                    >
+                      {digit}
+                    </span>
+                  ))}
+                </div>
+              </TableCell>
               <TableCell className="text-center">
                 <Badge variant="default" className="w-6 justify-center bg-primary hover:bg-primary">
                   {g.bulls}
