@@ -61,7 +61,7 @@ export function GamePanel({
   const renderSetSecret = () => (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 text-xl md:text-2xl">
           <KeyRound className="text-primary" />
           {playerName}: Set Your Secret
         </CardTitle>
@@ -69,7 +69,7 @@ export function GamePanel({
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmitSecret)} className="flex items-center gap-2">
+          <form onSubmit={form.handleSubmit(onSubmitSecret)} className="flex items-start gap-2">
             <FormField
               control={form.control}
               name="number"
@@ -99,7 +99,7 @@ export function GamePanel({
     }
 
     return (
-        <div className="flex-grow flex flex-col items-center justify-center bg-muted/50 rounded-md p-4 text-center">
+        <div className="flex-grow flex flex-col items-center justify-center bg-muted/50 rounded-md p-4 text-center min-h-[100px]">
             <Hourglass className="h-8 w-8 text-muted-foreground mb-2" />
             <p className="font-medium text-muted-foreground">{message}</p>
         </div>
@@ -109,7 +109,7 @@ export function GamePanel({
   const renderGuessing = () => (
     <Card className="flex flex-col h-full">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 text-xl md:text-2xl">
           <Target className="text-primary"/>
           {playerName}: {isMyTurn ? "Your Turn!" : "Waiting..."}
         </CardTitle>
@@ -122,7 +122,7 @@ export function GamePanel({
           renderWaitingMessage()
         ) : (
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmitGuess)} className="flex items-center gap-2">
+            <form onSubmit={form.handleSubmit(onSubmitGuess)} className="flex items-start gap-2">
               <FormField
                 control={form.control}
                 name="number"

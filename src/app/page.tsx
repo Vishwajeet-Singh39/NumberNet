@@ -86,7 +86,7 @@ export default function Home() {
     <div className="flex justify-center items-center flex-grow">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><User />Enter Player Names</CardTitle>
+          <CardTitle className="flex items-center gap-2 text-xl md:text-2xl"><User />Enter Player Names</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleStartGame} className="flex flex-col items-center gap-4">
@@ -116,7 +116,7 @@ export default function Home() {
   return (
     <>
       <main className="container mx-auto p-4 md:p-8 min-h-screen flex flex-col">
-        <header className="flex items-center justify-between mb-4">
+        <header className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <div className="flex items-center gap-3">
             <BrainCircuit className="h-8 w-8 text-primary" />
             <h1 className="text-3xl md:text-4xl font-bold font-headline tracking-tight">
@@ -124,13 +124,13 @@ export default function Home() {
             </h1>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={resetRound} disabled={!namesSet}>
+            <Button variant="outline" onClick={resetRound} disabled={!namesSet} size="sm">
               <RotateCcw />
-              Reset Round
+              <span className="hidden md:inline">Reset Round</span>
             </Button>
-            <Button variant="outline" onClick={handleNewGame}>
+            <Button variant="outline" onClick={handleNewGame} size="sm">
               <PlusSquare />
-              New Game
+              <span className="hidden md:inline">New Game</span>
             </Button>
           </div>
         </header>
@@ -143,7 +143,7 @@ export default function Home() {
               player1Score={player1Score}
               player2Score={player2Score}
             />
-            <div className="flex-grow grid md:grid-cols-2 gap-8 mt-8" key={gameId}>
+            <div className="flex-grow grid md:grid-cols-2 gap-4 md:gap-8 mt-4 md:mt-8" key={gameId}>
               <GamePanel
                 playerNumber={1}
                 playerName={player1Name}
@@ -181,12 +181,12 @@ export default function Home() {
               We have a winner!
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Congratulations to {winner === 1 ? player1Name : player2Name} for guessing the secret number: {winner === 1 ? player2Secret : player1Secret}!
+              Congratulations to {winner === 1 ? player1Name : winner === 2 ? player2Name : ''} for guessing the secret number: {winner === 1 ? player2Secret : player1Secret}!
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <Button variant="outline" onClick={handleNewGame}>New Game</Button>
-            <AlertDialogAction onClick={resetRound}>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={handleNewGame} className="w-full sm:w-auto">New Game</Button>
+            <AlertDialogAction onClick={resetRound} className="w-full sm:w-auto">
               <RotateCw />
               Play Again
             </AlertDialogAction>

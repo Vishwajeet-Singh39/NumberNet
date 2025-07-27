@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -20,18 +21,18 @@ const feedbackStyles = {
 export function GuessHistory({ guesses }: GuessHistoryProps) {
   if (guesses.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full rounded-lg bg-muted/30 border border-dashed">
+      <div className="flex items-center justify-center h-full min-h-[100px] rounded-lg bg-muted/30 border border-dashed">
         <p className="text-sm text-muted-foreground">Your guess history will appear here.</p>
       </div>
     );
   }
 
   return (
-    <ScrollArea className="h-full max-h-96 w-full rounded-md border">
+    <ScrollArea className="h-full max-h-80 md:max-h-96 w-full rounded-md border">
       <Table>
         <TableHeader className="sticky top-0 bg-card z-10">
           <TableRow>
-            <TableHead className="w-[50px]">#</TableHead>
+            <TableHead className="w-[40px] md:w-[50px] text-center">#</TableHead>
             <TableHead>Guess</TableHead>
             <TableHead className="text-center">Bulls</TableHead>
             <TableHead className="text-center">Cows</TableHead>
@@ -40,14 +41,14 @@ export function GuessHistory({ guesses }: GuessHistoryProps) {
         <TableBody>
           {guesses.map((g, index) => (
             <TableRow key={index} className={index === guesses.length - 1 ? "animate-in fade-in-20 slide-in-from-bottom-2 duration-500" : ""}>
-              <TableCell className="font-medium">{index + 1}</TableCell>
+              <TableCell className="font-medium text-center">{index + 1}</TableCell>
               <TableCell>
-                <div className="flex gap-2 font-mono tracking-widest">
+                <div className="flex gap-1 md:gap-2 font-mono tracking-widest">
                   {g.guess.split('').map((digit, i) => (
                     <span 
                       key={i} 
                       className={cn(
-                        "flex items-center justify-center w-8 h-8 rounded-md border text-lg font-bold",
+                        "flex items-center justify-center w-7 h-7 md:w-8 md:h-8 rounded-md border text-base md:text-lg font-bold",
                         g.feedback && g.feedback[i] ? feedbackStyles[g.feedback[i]] : 'bg-muted'
                       )}
                     >
