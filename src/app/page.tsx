@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BrainCircuit, RotateCw, Trophy, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { GamePanel } from '@/components/game-panel';
@@ -10,6 +10,7 @@ import type { Guess } from '@/lib/types';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Scoreboard } from '@/components/scoreboard';
 
 export default function Home() {
   const [gameId, setGameId] = useState(1);
@@ -21,6 +22,16 @@ export default function Home() {
   const [player1Guesses, setPlayer1Guesses] = useState<Guess[]>([]);
   const [player2Guesses, setPlayer2Guesses] = useState<Guess[]>([]);
   const [winner, setWinner] = useState<1 | 2 | null>(null);
+  const [player1Score, setPlayer1Score] = useState(0);
+  const [player2Score, setPlayer2Score] = useState(0);
+
+  useEffect(() => {
+    if (winner === 1) {
+      setPlayer1Score(prev => prev + 1);
+    } else if (winner === 2) {
+      setPlayer2Score(prev => prev + 1);
+    }
+  }, [winner]);
 
   const handleNewGame = () => {
     setPlayer1Secret(null);
@@ -86,7 +97,7 @@ export default function Home() {
   return (
     <>
       <main className="container mx-auto p-4 md:p-8 min-h-screen flex flex-col">
-        <header className="flex items-center justify-between mb-8">
+        <header className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <BrainCircuit className="h-8 w-8 text-primary" />
             <h1 className="text-3xl md:text-4xl font-bold font-headline tracking-tight">
@@ -100,30 +111,38 @@ export default function Home() {
         </header>
 
         { !namesSet ? renderNameInput() : (
-          <div className="flex-grow grid md:grid-cols-2 gap-8" key={gameId}>
-            <GamePanel
-              playerNumber={1}
-              playerName={player1Name}
-              opponentPlayerName={player2Name}
-              onSetSecret={setPlayer1Secret}
-              onGuess={handleP1Guess}
-              mySecret={player1Secret}
-              opponentSecretSet={!!player2Secret}
-              guesses={player1Guesses}
-              isGameOver={!!winner}
+          <>
+            <Scoreboard 
+              player1Name={player1Name} 
+              player2Name={player2Name}
+              player1Score={player1Score}
+              player2Score={player2Score}
             />
-            <GamePanel
-              playerNumber={2}
-              playerName={player2Name}
-              opponentPlayerName={player1Name}
-              onSetSecret={setPlayer2Secret}
-              onGuess={handleP2Guess}
-              mySecret={player2Secret}
-              opponentSecretSet={!!player1Secret}
-              guesses={player2Guesses}
-              isGameOver={!!winner}
-            />
-          </div>
+            <div className="flex-grow grid md:grid-cols-2 gap-8 mt-8" key={gameId}>
+              <GamePanel
+                playerNumber={1}
+                playerName={player1Name}
+                opponentPlayerName={player2Name}
+                onSetSecret={setPlayer1Secret}
+                onGuess={handleP1Guess}
+                mySecret={player1Secret}
+                opponentSecretSet={!!player2Secret}
+                guesses={player1Guesses}
+                isGameOver={!!winner}
+              />
+              <GamePanel
+                playerNumber={2}
+                playerName={player2Name}
+                opponentPlayerName={player1Name}
+                onSetSecret={setPlayer2Secret}
+                onGuess={handleP2Guess}
+                mySecret={player2Secret}
+                opponentSecretSet={!!player1Secret}
+                guesses={player2Guesses}
+                isGameOver={!!winner}
+              />
+            </div>
+          </>
         )}
       </main>
 
