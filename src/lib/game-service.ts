@@ -2,15 +2,15 @@
 'use server';
 
 import { Game, Player } from './types';
-import { randomUUID } from 'crypto';
 import { calculateBullsAndCows } from './game-logic';
 
 const games = new Map<string, Game>();
 const GAME_LIFETIME = 1000 * 60 * 60; // 1 hour in milliseconds
 const CLEANUP_INTERVAL = 1000 * 60 * 5; // 5 minutes in milliseconds
 
-const createPlayerId = () => `player_${randomUUID()}`;
-const createGameId = () => `game_${randomUUID()}`;
+const simpleId = () => Math.random().toString(36).substring(2, 9);
+const createPlayerId = () => `player_${simpleId()}`;
+const createGameId = () => `game_${simpleId()}`;
 
 // --- Game Management Functions ---
 
@@ -220,4 +220,6 @@ function cleanupInactiveGames() {
     }
 }
 
-setInterval(cleanupInactiveGames, CLEANUP_INTERVAL);
+if (typeof setInterval !== 'undefined') {
+    setInterval(cleanupInactiveGames, CLEANUP_INTERVAL);
+}
