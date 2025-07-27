@@ -27,8 +27,6 @@ export function GuessHistory({ guesses }: GuessHistoryProps) {
     );
   }
 
-  const reversedGuesses = [...guesses].reverse();
-
   return (
     <ScrollArea className="h-full max-h-80 md:max-h-96 w-full rounded-md border whitespace-nowrap">
       <div className="relative">
@@ -42,9 +40,9 @@ export function GuessHistory({ guesses }: GuessHistoryProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {reversedGuesses.map((g, index) => (
-              <TableRow key={index} className={index === 0 ? "animate-in fade-in-20 slide-in-from-bottom-2 duration-500" : ""}>
-                <TableCell className="font-medium text-center">{guesses.length - index}</TableCell>
+            {guesses.map((g, index) => (
+              <TableRow key={index} className={index === guesses.length - 1 ? "animate-in fade-in-20 slide-in-from-bottom-2 duration-500" : ""}>
+                <TableCell className="font-medium text-center">{index + 1}</TableCell>
                 <TableCell>
                   <div className="flex flex-nowrap gap-1 md:gap-2 font-mono tracking-widest">
                     {g.guess.split('').map((digit, i) => (
