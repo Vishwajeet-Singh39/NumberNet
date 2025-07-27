@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { Link, Clipboard, User, KeyRound, Target, Hourglass, Trophy, BrainCircuit, RotateCw, Award, BookOpen, AlertTriangle } from 'lucide-react';
+import { Link, Clipboard, User, KeyRound, Target, Hourglass, Trophy, BrainCircuit, RotateCw, Award, BookOpen, AlertTriangle, Home } from 'lucide-react';
 import { GuessHistory } from '@/components/guess-history';
 import { Scoreboard } from '@/components/scoreboard';
 
@@ -228,6 +228,9 @@ export default function GamePage() {
                         </Button>
                     </CardContent>
                 </Card>
+                <Button variant="outline" className="mt-4" onClick={() => router.push('/')}>
+                   <Home className="mr-2 h-4 w-4" /> New Game
+                </Button>
             </div>
         );
     }
