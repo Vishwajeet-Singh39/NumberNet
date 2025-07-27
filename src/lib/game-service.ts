@@ -81,6 +81,10 @@ export async function setSecret(gameId: string, playerId: string, secret: string
   const player = game.players.find(p => p.id === playerId);
   if (!player) return { error: 'Player not found' };
 
+  if (game.difficulty !== secret.length || !/^\d+$/.test(secret)) {
+    return { error: `Secret must be a ${game.difficulty}-digit number.` };
+  }
+
   player.secretNumber = secret;
 
   // If both players have set their secrets, the game is truly on.
@@ -99,6 +103,9 @@ export async function makeGuess(gameId: string, playerId: string, guess: string)
 
     if (game.status !== 'playing') return { error: 'Game is not active.' };
     if (game.turn !== playerId) return { error: "It's not your turn." };
+    if (guess.length !== game.difficulty || !/^\d+$/.test(guess)) {
+      return { error: `Guess must be a ${game.difficulty}-digit number.` };
+    }
 
     const currentPlayer = game.players.find(p => p.id === playerId);
     const opponent = game.players.find(p => p.id !== playerId);
@@ -125,25 +132,40 @@ export async function requestReset(gameId: string, playerId: string): Promise<Ga
   const game = games.get(gameId);
   if (!game) return { error: "Game not found" };
 
+  // Only non-host can request a reset. Host action is immediate.
   const isHost = game.players[0].id === playerId;
-
   if(isHost) {
-    // Host can reset directly
-    return resetGame(gameId, playerId);
+     return { error: "Host cannot request a reset, they can reset directly."}
   }
 
-  // Player 2 requests a reset
   game.resetRequestedBy = playerId;
   games.set(gameId, game);
   return game;
 }
 
+const performRoundReset = (game: Game): Game => {
+    // Reset secrets, guesses, and winner for a new round
+    game.players.forEach(p => {
+        p.secretNumber = undefined;
+        p.guesses = [];
+    });
+    game.status = 'playing';
+    game.winnerId = undefined;
+    game.resetRequestedBy = null;
+    // Let player 1 start the new round
+    game.turn = game.players[0].id; 
+    return game;
+}
+
 export async function resolveResetRequest(gameId: string, accept: boolean): Promise<Game | {error: string}> {
     const game = games.get(gameId);
     if (!game) return { error: "Game not found" };
+    if (!game.resetRequestedBy) return { error: "No reset has been requested." };
 
     if(accept) {
-        return resetGame(gameId, game.players[0].id);
+        const newGame = performRoundReset(game);
+        games.set(gameId, newGame);
+        return newGame;
     } else {
         game.resetRequestedBy = null;
         games.set(gameId, game);
@@ -156,31 +178,21 @@ export async function resetGame(gameId: string, playerId: string): Promise<Game 
   const game = games.get(gameId);
   if (!game) return { error: "Game not found" };
   
-  // Logic to handle "Play Again" after game is finished
-  if(game.status === 'finished') {
-      if(game.resetRequestedBy && game.resetRequestedBy !== playerId) {
-          // The other player has already requested a reset, so now we reset.
-          game.resetRequestedBy = null; // Clear the request
-      } else {
-          // This is the first player to request a reset.
-          game.resetRequestedBy = playerId;
-          games.set(gameId, game);
-          return game; // Wait for the other player
-      }
+  // This function is now only for "Play Again" after a game is finished.
+  if (game.status !== 'finished') {
+    return { error: 'Game is not finished yet.' };
   }
 
-
-  // Reset secrets, guesses, and winner for a new round
-  game.players.forEach(p => {
-    p.secretNumber = undefined;
-    p.guesses = [];
-  });
-  game.status = 'playing';
-  game.winnerId = undefined;
-  game.resetRequestedBy = null;
-  // Let player 1 start the new round
-  game.turn = game.players[0].id; 
+  // If the other player has already requested a reset, reset the game.
+  if(game.resetRequestedBy && game.resetRequestedBy !== playerId) {
+    const newGame = performRoundReset(game);
+    games.set(gameId, newGame);
+    return newGame;
+  }
   
+  // This is the first player to request "Play Again".
+  game.resetRequestedBy = playerId;
   games.set(gameId, game);
-  return game;
+  return game; // Wait for the other player
 }
+

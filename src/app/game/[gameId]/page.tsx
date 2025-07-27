@@ -70,7 +70,8 @@ export default function GamePage() {
     const isHost = useMemo(() => game?.players[0]?.id === playerId, [game, playerId]);
 
      useEffect(() => {
-        if (game?.resetRequestedBy && isHost && game.resetRequestedBy !== playerId) {
+        // Show reset request only if game is playing and this player is the host
+        if (game?.status === 'playing' && game?.resetRequestedBy && isHost && game.resetRequestedBy !== playerId) {
             const requester = game.players.find(p => p.id === game.resetRequestedBy);
             setResetRequesterName(requester?.name || 'Your opponent');
         } else {
@@ -96,10 +97,6 @@ export default function GamePage() {
 
     const handleSetSecret = async () => {
         if (!playerId || !game) return;
-        if (inputValue.length !== game.difficulty || !/^\d+$/.test(inputValue)) {
-             toast({ title: 'Error', description: `Secret must be a ${game.difficulty}-digit number.`, variant: 'destructive' });
-             return;
-        }
         const result = await setSecret(gameId, playerId, inputValue);
         if ('error' in result) {
             toast({ title: 'Error', description: result.error, variant: 'destructive' });
@@ -111,10 +108,6 @@ export default function GamePage() {
     
     const handleMakeGuess = async () => {
         if (!playerId || !game) return;
-        if (inputValue.length !== game.difficulty || !/^\d+$/.test(inputValue)) {
-             toast({ title: 'Error', description: `Guess must be a ${game.difficulty}-digit number.`, variant: 'destructive' });
-             return;
-        }
         const result = await makeGuess(gameId, playerId, inputValue);
          if ('error' in result) {
             toast({ title: 'Error', description: result.error, variant: 'destructive' });
@@ -152,6 +145,7 @@ export default function GamePage() {
         } else {
             setGame(result);
         }
+        setResetRequesterName(null); // Close the dialog
     }
 
     const copyInviteLink = () => {
@@ -212,19 +206,20 @@ export default function GamePage() {
     }
     
     const renderGameOverContent = () => {
-        const waitingForOtherPlayer = game?.resetRequestedBy && game.resetRequestedBy !== playerId;
-        const requestedByMe = game?.resetRequestedBy === playerId;
+        const iHaveRequested = game?.resetRequestedBy === playerId;
+        const opponentHasRequested = game?.resetRequestedBy && game.resetRequestedBy !== playerId;
 
-        if (requestedByMe && !waitingForOtherPlayer) {
-             return <p className="text-center text-muted-foreground">Waiting for {opponent?.name} to play again...</p>
+        if (iHaveRequested && !opponentHasRequested) {
+             return <p className="text-center text-muted-foreground">Waiting for {opponent?.name || 'opponent'} to play again...</p>;
         }
+        
+        const buttonText = opponentHasRequested ? "Accept & Play Again" : "Play Again";
 
         return (
              <AlertDialogFooter>
-                {isHost && (
-                     <Button variant="outline" onClick={() => router.push('/')}>New Game</Button>
-                )}
-                 <AlertDialogAction onClick={handlePlayAgain}> <RotateCw /> Play Again </AlertDialogAction>
+                 {!isHost && <Button variant="outline" onClick={() => router.push('/')}>Leave Game</Button>}
+                 {isHost && <Button variant="outline" onClick={() => router.push('/')}>New Game</Button>}
+                 <AlertDialogAction onClick={handlePlayAgain}> <RotateCw /> {buttonText} </AlertDialogAction>
             </AlertDialogFooter>
         );
     }
@@ -367,7 +362,7 @@ export default function GamePage() {
                     <AlertDialogHeader>
                         <AlertDialogTitle className="flex items-center gap-2"><Trophy className="text-accent" />Game Over!</AlertDialogTitle>
                         <AlertDialogDescription>
-                             {game?.winnerId === me.id ? "Congratulations, you are the winner!" : `${opponent?.name || 'Your opponent'} has won the game.`}
+                             {game?.winnerId === me.id ? "Congratulations, you won the round!" : `${opponent?.name || 'Your opponent'} won the round.`}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     {renderGameOverContent()}
@@ -390,3 +385,4 @@ export default function GamePage() {
         </main>
     );
 }
+
