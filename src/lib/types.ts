@@ -14,6 +14,7 @@ export interface Player {
   name: string;
   secretNumber?: string;
   guesses: Guess[];
+  score: number;
 }
 
 export interface Game {

@@ -22,6 +22,7 @@ export async function createGame(player1Name: string, difficulty: number): Promi
     id: playerId,
     name: player1Name,
     guesses: [],
+    score: 0,
   };
 
   const newGame: Game = {
@@ -57,6 +58,7 @@ export async function joinGame(gameId: string, playerName: string): Promise<{ ga
     id: newPlayerId,
     name: playerName,
     guesses: [],
+    score: 0,
   };
 
   game.players.push(player2);
@@ -109,6 +111,7 @@ export async function makeGuess(gameId: string, playerId: string, guess: string)
     if (bulls === game.difficulty) {
         game.status = 'finished';
         game.winnerId = playerId;
+        currentPlayer.score += 1; // Increment winner's score
     } else {
         game.turn = opponent.id; // Switch turns
     }
@@ -121,7 +124,7 @@ export async function resetGame(gameId: string): Promise<Game | {error: string}>
   const game = games.get(gameId);
   if (!game) return { error: "Game not found" };
 
-  // Reset secrets, guesses, and winner
+  // Reset secrets, guesses, and winner for a new round
   game.players.forEach(p => {
     p.secretNumber = undefined;
     p.guesses = [];

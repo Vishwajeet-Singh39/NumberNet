@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Link, Clipboard, User, KeyRound, Target, Hourglass, Trophy, BrainCircuit, RotateCw } from 'lucide-react';
 import { GuessHistory } from '@/components/guess-history';
+import { Scoreboard } from '@/components/scoreboard';
 
 
 export default function GamePage() {
@@ -177,13 +178,21 @@ export default function GamePage() {
 
     return (
         <main className="container mx-auto p-4 md:p-8 min-h-screen flex flex-col">
-            <header className="flex items-center justify-between mb-4">
+            <header className="flex flex-col sm:flex-row items-center justify-between mb-4 gap-4">
                  <div className="flex items-center gap-3">
                     <BrainCircuit className="h-8 w-8 text-primary" />
                     <h1 className="text-3xl md:text-4xl font-bold font-headline tracking-tight">
                         NumberNet
                     </h1>
                 </div>
+                 {me && opponent && (
+                   <Scoreboard 
+                    player1Name={me.name}
+                    player1Score={me.score}
+                    player2Name={opponent.name}
+                    player2Score={opponent.score}
+                    />
+                )}
                 <Button variant="outline" size="sm" onClick={() => router.push('/')}>New Game</Button>
             </header>
             
@@ -248,7 +257,7 @@ export default function GamePage() {
                     <AlertDialogHeader>
                         <AlertDialogTitle className="flex items-center gap-2"><Trophy className="text-accent" />Game Over!</AlertDialogTitle>
                         <AlertDialogDescription>
-                            {game?.winnerId === me.id ? "You are the winner!" : `${opponent?.name} has won the game.`}
+                            {game?.winnerId === me.id ? "Congratulations, you are the winner!" : `${opponent?.name} has won the game.`}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
