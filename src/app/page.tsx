@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { BrainCircuit, RotateCw, Trophy, User } from 'lucide-react';
+import { BrainCircuit, RotateCcw, RotateCw, Trophy, User, PlusSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { GamePanel } from '@/components/game-panel';
 import { calculateBullsAndCows } from '@/lib/game-logic';
@@ -33,8 +33,8 @@ export default function Home() {
       setPlayer2Score(prev => prev + 1);
     }
   }, [winner]);
-  
-  const handleNewGame = () => {
+
+  const resetRound = () => {
     setPlayer1Secret(null);
     setPlayer2Secret(null);
     setPlayer1Guesses([]);
@@ -42,11 +42,15 @@ export default function Home() {
     setWinner(null);
     setGameId(prevId => prevId + 1);
     setCurrentPlayer(1);
-    if(namesSet){
-      setNamesSet(false);
-      setPlayer1Name('');
-      setPlayer2Name('');
-    }
+  };
+  
+  const handleNewGame = () => {
+    resetRound();
+    setNamesSet(false);
+    setPlayer1Name('');
+    setPlayer2Name('');
+    setPlayer1Score(0);
+    setPlayer2Score(0);
   };
   
   const handleStartGame = (e: React.FormEvent) => {
@@ -119,10 +123,16 @@ export default function Home() {
               NumberNet
             </h1>
           </div>
-          <Button variant="outline" onClick={handleNewGame}>
-            <RotateCw />
-            New Game
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={resetRound} disabled={!namesSet}>
+              <RotateCcw />
+              Reset Round
+            </Button>
+            <Button variant="outline" onClick={handleNewGame}>
+              <PlusSquare />
+              New Game
+            </Button>
+          </div>
         </header>
 
         { !namesSet ? renderNameInput() : (
@@ -175,7 +185,9 @@ export default function Home() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction onClick={handleNewGame}>
+            <Button variant="outline" onClick={handleNewGame}>New Game</Button>
+            <AlertDialogAction onClick={resetRound}>
+              <RotateCw />
               Play Again
             </AlertDialogAction>
           </AlertDialogFooter>
