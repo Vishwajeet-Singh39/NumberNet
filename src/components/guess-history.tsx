@@ -28,15 +28,15 @@ export function GuessHistory({ guesses }: GuessHistoryProps) {
   }
 
   return (
-    <ScrollArea className="h-full max-h-80 md:max-h-96 w-full rounded-md border">
+    <ScrollArea className="h-full max-h-80 md:max-h-96 w-full rounded-md border whitespace-nowrap">
       <div className="relative">
         <Table>
           <TableHeader className="sticky top-0 bg-card z-10">
             <TableRow>
-              <TableHead className="w-[40px] md:w-[50px] text-center">#</TableHead>
+              <TableHead className="w-[50px] text-center">#</TableHead>
               <TableHead className="min-w-[150px]">Guess</TableHead>
-              <TableHead className="text-center">Bulls</TableHead>
-              <TableHead className="text-center">Cows</TableHead>
+              <TableHead className="w-[50px] text-center">Bulls</TableHead>
+              <TableHead className="w-[50px] text-center">Cows</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
