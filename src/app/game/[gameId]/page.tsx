@@ -66,6 +66,7 @@ export default function GamePage() {
 
     const me = useMemo(() => game?.players.find(p => p.id === playerId), [game, playerId]);
     const opponent = useMemo(() => game?.players.find(p => p.id !== playerId), [game, playerId]);
+    const isHost = useMemo(() => game?.players[0]?.id === playerId, [game, playerId]);
 
     const handleJoinGame = async () => {
         if (!inputValue.trim()) {
@@ -318,12 +319,12 @@ export default function GamePage() {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <Button variant="outline" onClick={() => router.push('/')}>New Game</Button>
-                        <AlertDialogAction onClick={handleResetGame}> <RotateCw /> Play Again </AlertDialogAction>
+                        {isHost && (
+                            <AlertDialogAction onClick={handleResetGame}> <RotateCw /> Play Again </AlertDialogAction>
+                        )}
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
         </main>
     );
 }
-
-    
