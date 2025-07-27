@@ -1,4 +1,3 @@
-
 'use server';
 
 import { Game, Player } from './types';
