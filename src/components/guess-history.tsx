@@ -4,7 +4,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import type { Guess } from '@/lib/types';
-import { ScrollArea } from './ui/scroll-area';
+import { ScrollArea, ScrollBar } from './ui/scroll-area';
 import { cn } from '@/lib/utils';
 
 interface GuessHistoryProps {
@@ -28,7 +28,7 @@ export function GuessHistory({ guesses }: GuessHistoryProps) {
   }
 
   return (
-    <ScrollArea className="h-full max-h-80 md:max-h-96 w-full rounded-md border">
+    <ScrollArea className="h-full max-h-80 md:max-h-96 w-full rounded-md border whitespace-nowrap">
       <Table>
         <TableHeader className="sticky top-0 bg-card z-10">
           <TableRow>
@@ -43,12 +43,12 @@ export function GuessHistory({ guesses }: GuessHistoryProps) {
             <TableRow key={index} className={index === guesses.length - 1 ? "animate-in fade-in-20 slide-in-from-bottom-2 duration-500" : ""}>
               <TableCell className="font-medium text-center">{index + 1}</TableCell>
               <TableCell>
-                <div className="flex flex-wrap gap-1 md:gap-2 font-mono tracking-widest">
+                <div className="flex flex-nowrap gap-1 md:gap-2 font-mono tracking-widest">
                   {g.guess.split('').map((digit, i) => (
                     <span 
                       key={i} 
                       className={cn(
-                        "flex items-center justify-center w-7 h-7 md:w-8 md:h-8 rounded-md border text-base md:text-lg font-bold",
+                        "flex items-center justify-center w-7 h-7 md:w-8 md:h-8 rounded-md border text-base md:text-lg font-bold shrink-0",
                         g.feedback && g.feedback[i] ? feedbackStyles[g.feedback[i]] : 'bg-muted'
                       )}
                     >
@@ -71,6 +71,7 @@ export function GuessHistory({ guesses }: GuessHistoryProps) {
           ))}
         </TableBody>
       </Table>
+      <ScrollBar orientation="horizontal" />
     </ScrollArea>
   );
 }
