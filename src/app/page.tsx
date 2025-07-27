@@ -85,18 +85,20 @@ export default function Home() {
           <CardTitle className="flex items-center gap-2"><User />Enter Player Names</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleStartGame} className="space-y-4">
+          <form onSubmit={handleStartGame} className="flex flex-col items-center gap-4">
             <Input 
               placeholder="Player 1 Name" 
               value={player1Name}
               onChange={(e) => setPlayer1Name(e.target.value)}
               required
+              className="flex-grow"
             />
             <Input 
               placeholder="Player 2 Name" 
               value={player2Name}
               onChange={(e) => setPlayer2Name(e.target.value)}
               required
+              className="flex-grow"
             />
             <Button type="submit" className="w-full">Start Game</Button>
           </form>

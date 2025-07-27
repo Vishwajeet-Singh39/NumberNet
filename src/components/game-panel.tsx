@@ -69,7 +69,7 @@ export function GamePanel({
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmitSecret)} className="flex items-start gap-2">
+          <form onSubmit={form.handleSubmit(onSubmitSecret)} className="flex items-center gap-2">
             <FormField
               control={form.control}
               name="number"
@@ -122,7 +122,7 @@ export function GamePanel({
           renderWaitingMessage()
         ) : (
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmitGuess)} className="flex items-start gap-2">
+            <form onSubmit={form.handleSubmit(onSubmitGuess)} className="flex items-center gap-2">
               <FormField
                 control={form.control}
                 name="number"
