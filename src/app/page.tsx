@@ -42,6 +42,11 @@ export default function Home() {
     setWinner(null);
     setGameId(prevId => prevId + 1);
     setCurrentPlayer(1);
+    if(namesSet){
+      setNamesSet(false);
+      setPlayer1Name('');
+      setPlayer2Name('');
+    }
   };
   
   const handleStartGame = (e: React.FormEvent) => {
