@@ -28,7 +28,8 @@ export default function Home() {
     }
     setIsCreating(true);
     try {
-      const { gameId, playerId } = await createGame(playerName);
+      // FIX: Pass the difficulty (hardcoded to 4 for now)
+      const { gameId, playerId } = await createGame(playerName, 4);
       // Store player ID to identify the user in the game room
       localStorage.setItem(`player_id_for_${gameId}`, playerId);
       router.push(`/game/${gameId}`);
