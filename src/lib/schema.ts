@@ -1,9 +1,10 @@
+
 import { z } from 'zod';
 
-export const numberSchema = z.object({
+export const createNumberSchema = (length: number) => z.object({
   number: z.string()
-    .length(4, { message: "Number must be 4 digits long." })
-    .regex(/^\d{4}$/, { message: "Only digits are allowed." }),
+    .length(length, { message: `Number must be ${length} digits long.` })
+    .regex(new RegExp(`^\\d{${length}}$`), { message: "Only digits are allowed." }),
 });
 
-export type NumberSchema = z.infer<typeof numberSchema>;
+export type NumberSchema = z.infer<returnType<typeof createNumberSchema>>;

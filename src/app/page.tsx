@@ -11,12 +11,15 @@ import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescript
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Scoreboard } from '@/components/scoreboard';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function Home() {
   const [gameId, setGameId] = useState(1);
   const [player1Name, setPlayer1Name] = useState('');
   const [player2Name, setPlayer2Name] = useState('');
   const [namesSet, setNamesSet] = useState(false);
+  const [digitCount, setDigitCount] = useState(4);
   const [player1Secret, setPlayer1Secret] = useState<string | null>(null);
   const [player2Secret, setPlayer2Secret] = useState<string | null>(null);
   const [player1Guesses, setPlayer1Guesses] = useState<Guess[]>([]);
@@ -64,7 +67,7 @@ export default function Home() {
     if (!player2Secret) return;
     const { bulls, cows, feedback } = calculateBullsAndCows(player2Secret, guess);
     setPlayer1Guesses(prev => [...prev, { guess, bulls, cows, feedback }]);
-    if (bulls === 4) {
+    if (bulls === digitCount) {
       setWinner(1);
     } else {
       setCurrentPlayer(2);
@@ -75,7 +78,7 @@ export default function Home() {
     if (!player1Secret) return;
     const { bulls, cows, feedback } = calculateBullsAndCows(player1Secret, guess);
     setPlayer2Guesses(prev => [...prev, { guess, bulls, cows, feedback }]);
-    if (bulls === 4) {
+    if (bulls === digitCount) {
       setWinner(2);
     } else {
       setCurrentPlayer(1);
@@ -106,6 +109,19 @@ export default function Home() {
               required
               className="flex-grow"
             />
+            <div className="w-full flex flex-col gap-2">
+              <Label htmlFor="difficulty">Difficulty (Number Length)</Label>
+               <Select value={String(digitCount)} onValueChange={(value) => setDigitCount(Number(value))}>
+                <SelectTrigger id="difficulty">
+                  <SelectValue placeholder="Select difficulty" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 7 }, (_, i) => i + 4).map(num => (
+                    <SelectItem key={num} value={String(num)}>{num} Digits</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <Button type="submit" className="w-full">Start Game</Button>
           </form>
         </CardContent>
@@ -155,6 +171,7 @@ export default function Home() {
                 guesses={player1Guesses}
                 isMyTurn={currentPlayer === 1}
                 isGameOver={!!winner}
+                digitCount={digitCount}
               />
               <GamePanel
                 playerNumber={2}
@@ -167,6 +184,7 @@ export default function Home() {
                 guesses={player2Guesses}
                 isMyTurn={currentPlayer === 2}
                 isGameOver={!!winner}
+                digitCount={digitCount}
               />
             </div>
           </>

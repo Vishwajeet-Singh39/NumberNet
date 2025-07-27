@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { GuessHistory } from '@/components/guess-history';
-import { numberSchema, type NumberSchema } from '@/lib/schema';
+import { createNumberSchema, type NumberSchema } from '@/lib/schema';
 import type { Guess } from '@/lib/types';
 
 interface GamePanelProps {
@@ -24,6 +24,7 @@ interface GamePanelProps {
   guesses: Guess[];
   isMyTurn: boolean;
   isGameOver: boolean;
+  digitCount: number;
 }
 
 export function GamePanel({
@@ -37,7 +38,10 @@ export function GamePanel({
   guesses,
   isMyTurn,
   isGameOver,
+  digitCount,
 }: GamePanelProps) {
+  
+  const numberSchema = createNumberSchema(digitCount);
   
   const form = useForm<NumberSchema>({
     resolver: zodResolver(numberSchema),
@@ -65,7 +69,7 @@ export function GamePanel({
           <KeyRound className="text-primary" />
           {playerName}: Set Your Secret
         </CardTitle>
-        <CardDescription>Enter a 4-digit secret number for {opponentPlayerName} to guess.</CardDescription>
+        <CardDescription>Enter a {digitCount}-digit secret number for {opponentPlayerName} to guess.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -77,7 +81,7 @@ export function GamePanel({
                 <FormItem className="flex-grow">
                   <FormLabel className="sr-only">Secret Number</FormLabel>
                   <FormControl>
-                    <Input placeholder="1234" {...field} maxLength={4} type="password" />
+                    <Input placeholder={"".padStart(digitCount, '•')} {...field} maxLength={digitCount} type="password" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -114,7 +118,7 @@ export function GamePanel({
           {playerName}: {isMyTurn ? "Your Turn!" : "Waiting..."}
         </CardTitle>
         <CardDescription>
-          Your secret is set. Now, guess {opponentPlayerName}'s 4-digit number.
+          Your secret is set. Now, guess {opponentPlayerName}'s {digitCount}-digit number.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow flex flex-col gap-4">
@@ -130,7 +134,7 @@ export function GamePanel({
                   <FormItem className="flex-grow">
                     <FormLabel className="sr-only">Your Guess</FormLabel>
                     <FormControl>
-                      <Input placeholder="Your guess..." {...field} maxLength={4} disabled={!canPlay}/>
+                      <Input placeholder="Your guess..." {...field} maxLength={digitCount} disabled={!canPlay}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

@@ -1,11 +1,13 @@
+
 import type { DigitFeedback } from "./types";
 
 export const calculateBullsAndCows = (secret: string, guess: string): { bulls: number; cows: number; feedback: DigitFeedback[] } => {
   let bulls = 0;
   let cows = 0;
-  const feedback: DigitFeedback[] = Array(4).fill('absent');
+  const numDigits = secret.length;
+  const feedback: DigitFeedback[] = Array(numDigits).fill('absent');
 
-  if (secret.length !== 4 || guess.length !== 4) {
+  if (guess.length !== numDigits) {
     return { bulls: 0, cows: 0, feedback: [] };
   }
 
@@ -14,7 +16,7 @@ export const calculateBullsAndCows = (secret: string, guess: string): { bulls: n
   const secretChars = secret.split('');
 
   // First pass for bulls (correct digit in correct position)
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < numDigits; i++) {
     if (guessChars[i] === secretChars[i]) {
       bulls++;
       feedback[i] = 'correct';
@@ -25,7 +27,7 @@ export const calculateBullsAndCows = (secret: string, guess: string): { bulls: n
   }
 
   // Second pass for cows (correct digit in wrong position)
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < numDigits; i++) {
     if (feedback[i] !== 'correct') { // Only check non-bulls
       if (secretFreq[guessChars[i]] && secretFreq[guessChars[i]] > 0) {
         cows++;

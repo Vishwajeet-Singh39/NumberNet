@@ -43,7 +43,7 @@ export function GuessHistory({ guesses }: GuessHistoryProps) {
             <TableRow key={index} className={index === guesses.length - 1 ? "animate-in fade-in-20 slide-in-from-bottom-2 duration-500" : ""}>
               <TableCell className="font-medium text-center">{index + 1}</TableCell>
               <TableCell>
-                <div className="flex gap-1 md:gap-2 font-mono tracking-widest">
+                <div className="flex flex-wrap gap-1 md:gap-2 font-mono tracking-widest">
                   {g.guess.split('').map((digit, i) => (
                     <span 
                       key={i} 
