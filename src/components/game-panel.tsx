@@ -22,6 +22,7 @@ interface GamePanelProps {
   mySecret: string | null;
   opponentSecretSet: boolean;
   guesses: Guess[];
+  isMyTurn: boolean;
   isGameOver: boolean;
 }
 
@@ -34,6 +35,7 @@ export function GamePanel({
   mySecret,
   opponentSecretSet,
   guesses,
+  isMyTurn,
   isGameOver,
 }: GamePanelProps) {
   
@@ -53,6 +55,8 @@ export function GamePanel({
     onGuess(data.number);
     form.reset();
   };
+  
+  const canPlay = isMyTurn && !isGameOver && opponentSecretSet;
 
   const renderSetSecret = () => (
     <Card>
@@ -85,29 +89,37 @@ export function GamePanel({
       </CardContent>
     </Card>
   );
+  
+  const renderWaitingMessage = () => {
+    let message = `Waiting for ${opponentPlayerName} to set their secret number...`;
+    if(isGameOver) {
+        message = "Game Over! A winner has been decided.";
+    } else if (opponentSecretSet && !isMyTurn) {
+        message = `Waiting for ${opponentPlayerName} to make a guess...`;
+    }
+
+    return (
+        <div className="flex-grow flex flex-col items-center justify-center bg-muted/50 rounded-md p-4 text-center">
+            <Hourglass className="h-8 w-8 text-muted-foreground mb-2" />
+            <p className="font-medium text-muted-foreground">{message}</p>
+        </div>
+    );
+  }
 
   const renderGuessing = () => (
     <Card className="flex flex-col h-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Target className="text-primary"/>
-          {playerName}: Make a Guess
+          {playerName}: {isMyTurn ? "Your Turn!" : "Waiting..."}
         </CardTitle>
         <CardDescription>
           Your secret is set. Now, guess {opponentPlayerName}'s 4-digit number.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow flex flex-col gap-4">
-        {!opponentSecretSet ? (
-          <div className="flex-grow flex flex-col items-center justify-center bg-muted/50 rounded-md p-4 text-center">
-            <Hourglass className="h-8 w-8 text-muted-foreground mb-2" />
-            <p className="font-medium text-muted-foreground">Waiting for {opponentPlayerName} to set their secret number...</p>
-          </div>
-        ) : isGameOver ? (
-           <div className="flex-grow flex flex-col items-center justify-center bg-muted/50 rounded-md p-4 text-center">
-            <p className="text-lg font-semibold">Game Over!</p>
-            <p className="text-muted-foreground">A winner has been decided. Start a new game to play again.</p>
-          </div>
+        {!canPlay ? (
+          renderWaitingMessage()
         ) : (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmitGuess)} className="flex items-start gap-2">
@@ -118,13 +130,13 @@ export function GamePanel({
                   <FormItem className="flex-grow">
                     <FormLabel className="sr-only">Your Guess</FormLabel>
                     <FormControl>
-                      <Input placeholder="Your guess..." {...field} maxLength={4} />
+                      <Input placeholder="Your guess..." {...field} maxLength={4} disabled={!canPlay}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit">Guess</Button>
+              <Button type="submit" disabled={!canPlay}>Guess</Button>
             </form>
           </Form>
         )}

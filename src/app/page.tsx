@@ -24,6 +24,7 @@ export default function Home() {
   const [winner, setWinner] = useState<1 | 2 | null>(null);
   const [player1Score, setPlayer1Score] = useState(0);
   const [player2Score, setPlayer2Score] = useState(0);
+  const [currentPlayer, setCurrentPlayer] = useState<1 | 2>(1);
 
   useEffect(() => {
     if (winner === 1) {
@@ -32,7 +33,7 @@ export default function Home() {
       setPlayer2Score(prev => prev + 1);
     }
   }, [winner]);
-
+  
   const handleNewGame = () => {
     setPlayer1Secret(null);
     setPlayer2Secret(null);
@@ -40,6 +41,7 @@ export default function Home() {
     setPlayer2Guesses([]);
     setWinner(null);
     setGameId(prevId => prevId + 1);
+    setCurrentPlayer(1);
   };
   
   const handleStartGame = (e: React.FormEvent) => {
@@ -55,6 +57,8 @@ export default function Home() {
     setPlayer1Guesses(prev => [...prev, { guess, bulls, cows, feedback }]);
     if (bulls === 4) {
       setWinner(1);
+    } else {
+      setCurrentPlayer(2);
     }
   };
 
@@ -64,6 +68,8 @@ export default function Home() {
     setPlayer2Guesses(prev => [...prev, { guess, bulls, cows, feedback }]);
     if (bulls === 4) {
       setWinner(2);
+    } else {
+      setCurrentPlayer(1);
     }
   };
   
@@ -128,6 +134,7 @@ export default function Home() {
                 mySecret={player1Secret}
                 opponentSecretSet={!!player2Secret}
                 guesses={player1Guesses}
+                isMyTurn={currentPlayer === 1}
                 isGameOver={!!winner}
               />
               <GamePanel
@@ -139,6 +146,7 @@ export default function Home() {
                 mySecret={player2Secret}
                 opponentSecretSet={!!player1Secret}
                 guesses={player2Guesses}
+                isMyTurn={currentPlayer === 2}
                 isGameOver={!!winner}
               />
             </div>
