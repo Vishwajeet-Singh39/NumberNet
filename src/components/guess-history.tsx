@@ -28,49 +28,51 @@ export function GuessHistory({ guesses }: GuessHistoryProps) {
   }
 
   return (
-    <ScrollArea className="h-full max-h-80 md:max-h-96 w-full rounded-md border whitespace-nowrap">
-      <Table>
-        <TableHeader className="sticky top-0 bg-card z-10">
-          <TableRow>
-            <TableHead className="w-[40px] md:w-[50px] text-center">#</TableHead>
-            <TableHead>Guess</TableHead>
-            <TableHead className="text-center">Bulls</TableHead>
-            <TableHead className="text-center">Cows</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {guesses.map((g, index) => (
-            <TableRow key={index} className={index === guesses.length - 1 ? "animate-in fade-in-20 slide-in-from-bottom-2 duration-500" : ""}>
-              <TableCell className="font-medium text-center">{index + 1}</TableCell>
-              <TableCell>
-                <div className="flex flex-nowrap gap-1 md:gap-2 font-mono tracking-widest">
-                  {g.guess.split('').map((digit, i) => (
-                    <span 
-                      key={i} 
-                      className={cn(
-                        "flex items-center justify-center w-7 h-7 md:w-8 md:h-8 rounded-md border text-base md:text-lg font-bold shrink-0",
-                        g.feedback && g.feedback[i] ? feedbackStyles[g.feedback[i]] : 'bg-muted'
-                      )}
-                    >
-                      {digit}
-                    </span>
-                  ))}
-                </div>
-              </TableCell>
-              <TableCell className="text-center">
-                <Badge variant="default" className="w-6 justify-center bg-primary hover:bg-primary">
-                  {g.bulls}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-center">
-                <Badge variant="secondary" className="w-6 justify-center bg-accent hover:bg-accent text-accent-foreground">
-                  {g.cows}
-                </Badge>
-              </TableCell>
+    <ScrollArea className="h-full max-h-80 md:max-h-96 w-full rounded-md border">
+      <div className="relative">
+        <Table>
+          <TableHeader className="sticky top-0 bg-card z-10">
+            <TableRow>
+              <TableHead className="w-[40px] md:w-[50px] text-center">#</TableHead>
+              <TableHead className="min-w-[150px]">Guess</TableHead>
+              <TableHead className="text-center">Bulls</TableHead>
+              <TableHead className="text-center">Cows</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {guesses.map((g, index) => (
+              <TableRow key={index} className={index === guesses.length - 1 ? "animate-in fade-in-20 slide-in-from-bottom-2 duration-500" : ""}>
+                <TableCell className="font-medium text-center">{index + 1}</TableCell>
+                <TableCell>
+                  <div className="flex flex-nowrap gap-1 md:gap-2 font-mono tracking-widest">
+                    {g.guess.split('').map((digit, i) => (
+                      <span 
+                        key={i} 
+                        className={cn(
+                          "flex items-center justify-center w-7 h-7 md:w-8 md:h-8 rounded-md border text-base md:text-lg font-bold shrink-0",
+                          g.feedback && g.feedback[i] ? feedbackStyles[g.feedback[i]] : 'bg-muted'
+                        )}
+                      >
+                        {digit}
+                      </span>
+                    ))}
+                  </div>
+                </TableCell>
+                <TableCell className="text-center">
+                  <Badge variant="default" className="w-6 justify-center bg-primary hover:bg-primary">
+                    {g.bulls}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-center">
+                  <Badge variant="secondary" className="w-6 justify-center bg-accent hover:bg-accent text-accent-foreground">
+                    {g.cows}
+                  </Badge>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
       <ScrollBar orientation="horizontal" />
     </ScrollArea>
   );
