@@ -99,6 +99,7 @@ export default function Home() {
               value={player1Name}
               onChange={(e) => setPlayer1Name(e.target.value)}
               required
+              maxLength={12}
               className="flex-grow"
             />
             <Input 
@@ -107,6 +108,7 @@ export default function Home() {
               value={player2Name}
               onChange={(e) => setPlayer2Name(e.target.value)}
               required
+              maxLength={12}
               className="flex-grow"
             />
             <div className="w-full flex flex-col gap-2">
