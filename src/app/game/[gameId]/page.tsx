@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getGame, joinGame, makeGuess, setSecret, resetGame, requestReset, resolveResetRequest, deleteGame, expireTurn } from '@/lib/game-service';
+import { getGame, joinGame, makeGuess, setSecret, resetGame, requestReset, resolveResetRequest, deleteGame, expireTurn, startGame } from '@/lib/game-service';
 import type { Game, Player } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { Link, Clipboard, User, KeyRound, Target, Hourglass, Trophy, BrainCircuit, RotateCw, Award, BookOpen, AlertTriangle, Home } from 'lucide-react';
+import { Link, Clipboard, User, KeyRound, Target, Hourglass, Trophy, BrainCircuit, RotateCw, Award, BookOpen, AlertTriangle, Home, Play } from 'lucide-react';
 import { GuessHistory } from '@/components/guess-history';
 import { Scoreboard } from '@/components/scoreboard';
 import { Progress } from '@/components/ui/progress';
@@ -108,9 +108,9 @@ export default function GamePage() {
                 if (updatedGame) {
                     setGame(updatedGame);
                 } else {
+                    if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current); 
                     toast({ title: "Game Over", description: "The game session has ended." });
                     router.push('/');
-                    if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current); 
                 }
             } catch (error) {
                 console.error("Failed to poll for game state:", error);
@@ -175,6 +175,16 @@ export default function GamePage() {
             setGame(result);
         }
         setInputValue('');
+    }
+
+    const handleStartGame = async () => {
+        if (!playerId) return;
+        const result = await startGame(gameId, playerId);
+        if ('error' in result) {
+            toast({ title: 'Error', description: result.error, variant: 'destructive' });
+        } else {
+            setGame(result);
+        }
     }
     
     const handlePlayAgain = async () => {
@@ -309,7 +319,7 @@ export default function GamePage() {
     const renderTimer = () => {
         if (!isMyTurn || timeLeft <= 0 || !game) return null;
         
-        const totalDuration = Math.max(10, game.difficulty * 3) * 1000;
+        const totalDuration = Math.max(10000, game.difficulty * 3 * 1000);
         const progress = (timeLeft / totalDuration) * 100;
 
         return (
@@ -322,6 +332,63 @@ export default function GamePage() {
             </div>
         )
     }
+
+    const renderPlayerCardContent = (player: Player, isMe: boolean) => {
+        const isOpponent = !isMe;
+        const canSetSecret = isMe && !player.secretNumber && (game?.status === 'playing' || game?.status === 'ready');
+        
+        if (canSetSecret) {
+            return (
+                <div className="flex flex-col gap-2">
+                    <p className="text-sm text-muted-foreground flex items-center gap-2"><KeyRound/>Set your {game?.difficulty}-digit secret number.</p>
+                    <div className="flex gap-2">
+                        <Input type="password" value={inputValue} onChange={e => setInputValue(e.target.value)} maxLength={game?.difficulty} />
+                        <Button onClick={handleSetSecret}>Set Secret</Button>
+                    </div>
+                </div>
+            );
+        }
+
+        if (!player.secretNumber) {
+             return <p className="text-sm text-muted-foreground flex items-center justify-center gap-2 p-4 bg-muted/50 rounded-md"><Hourglass className="animate-spin" />Waiting for {player.name} to set a secret...</p>
+        }
+
+        if (isMe) {
+            return (
+                 <div className="flex flex-col gap-4">
+                    <div>
+                        <p className="text-sm font-medium flex items-center gap-2"><Target />Your Guesses</p>
+                        <GuessHistory guesses={player.guesses} />
+                    </div>
+                    {isMyTurn && opponent?.secretNumber ? (
+                         <>
+                            <div className="flex gap-2">
+                                <Input placeholder={`Guess ${opponent.name}'s number...`} value={inputValue} onChange={e => setInputValue(e.target.value)} maxLength={game?.difficulty} />
+                                <Button onClick={handleMakeGuess}>Guess</Button>
+                            </div>
+                            {renderTimer()}
+                         </>
+                    ) : (
+                        isMyTurn && !opponent?.secretNumber && (
+                             <p className="text-sm text-muted-foreground flex items-center justify-center gap-2 p-4 bg-muted/50 rounded-md"><Hourglass className="animate-spin" />Waiting for {opponent?.name} to set their secret...</p>
+                        )
+                    )}
+                </div>
+            )
+        }
+        
+        if(isOpponent) {
+             return (
+                <div>
+                    <p className="text-sm font-medium flex items-center gap-2"><Target />{player.name}'s Guesses</p>
+                    <GuessHistory guesses={player.guesses} />
+                </div>
+            )
+        }
+        
+        return null;
+    }
+
 
     return (
         <main className="container mx-auto p-4 md:p-8 min-h-screen flex flex-col">
@@ -410,35 +477,7 @@ export default function GamePage() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        {!me.secretNumber ? (
-                            <div className="flex flex-col gap-2">
-                                <p className="text-sm text-muted-foreground flex items-center gap-2"><KeyRound/>Set your {game?.difficulty}-digit secret number.</p>
-                                <div className="flex gap-2">
-                                    <Input type="password" value={inputValue} onChange={e => setInputValue(e.target.value)} maxLength={game?.difficulty} />
-                                    <Button onClick={handleSetSecret}>Set Secret</Button>
-                                </div>
-                            </div>
-                        ) : (
-                             <div className="flex flex-col gap-4">
-                                <div>
-                                    <p className="text-sm font-medium flex items-center gap-2"><Target />Your Guesses</p>
-                                    <GuessHistory guesses={me.guesses} />
-                                </div>
-                                {isMyTurn && opponent?.secretNumber ? (
-                                     <>
-                                        <div className="flex gap-2">
-                                            <Input placeholder={`Guess ${opponent.name}'s number...`} value={inputValue} onChange={e => setInputValue(e.target.value)} maxLength={game?.difficulty} />
-                                            <Button onClick={handleMakeGuess}>Guess</Button>
-                                        </div>
-                                        {renderTimer()}
-                                     </>
-                                ) : (
-                                    isMyTurn && !opponent?.secretNumber && (
-                                         <p className="text-sm text-muted-foreground flex items-center justify-center gap-2 p-4 bg-muted/50 rounded-md"><Hourglass className="animate-spin" />Waiting for {opponent?.name} to set their secret...</p>
-                                    )
-                                )}
-                            </div>
-                        )}
+                       {renderPlayerCardContent(me, true)}
                     </CardContent>
                 </Card>
 
@@ -451,14 +490,7 @@ export default function GamePage() {
                         </CardTitle>
                     </CardHeader>
                      <CardContent>
-                        {!opponent?.secretNumber ? (
-                             <p className="text-sm text-muted-foreground flex items-center justify-center gap-2 p-4 bg-muted/50 rounded-md"><Hourglass className="animate-spin" />Waiting for {opponent?.name} to set their secret...</p>
-                        ) : (
-                             <div>
-                                <p className="text-sm font-medium flex items-center gap-2"><Target />{opponent.name}'s Guesses</p>
-                                <GuessHistory guesses={opponent.guesses} />
-                            </div>
-                        )}
+                        {opponent ? renderPlayerCardContent(opponent, false) :  <p className="text-sm text-muted-foreground flex items-center justify-center gap-2 p-4 bg-muted/50 rounded-md">Waiting for opponent...</p>}
                     </CardContent>
                 </Card>
             </div>
@@ -476,7 +508,7 @@ export default function GamePage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-             <AlertDialog open={!!resetRequesterName}>
+            <AlertDialog open={!!resetRequesterName}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle className="flex items-center gap-2"><AlertTriangle className="text-accent" />Reset Request</AlertDialogTitle>
@@ -487,6 +519,19 @@ export default function GamePage() {
                     <AlertDialogFooter>
                         <AlertDialogCancel onClick={() => handleResolveResetRequest(false)}>Cancel</AlertDialogCancel>
                         <AlertDialogAction onClick={() => handleResolveResetRequest(true)}>Reset Round</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+             <AlertDialog open={game?.status === 'ready' && isHost}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2"><Play className="text-primary"/>Ready to Start?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                           Both you and {opponent?.name} have set your secret numbers.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                       <Button onClick={handleStartGame} className="w-full">Start Guessing</Button>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

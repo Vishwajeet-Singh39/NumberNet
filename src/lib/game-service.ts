@@ -12,7 +12,7 @@ const createId = () => Math.random().toString(36).substring(2, 9);
 const createPlayerId = () => `player_${createId()}`;
 const createGameId = () => `game_${createId()}`;
 
-const getTurnDuration = (difficulty: number) => (difficulty * 3 * 1000)+10; // in milliseconds
+const getTurnDuration = (difficulty: number) => Math.max(10000, difficulty * 3 * 1000); // in milliseconds
 
 const setNextTurn = (game: Game, nextPlayerId: string) => {
     game.turn = nextPlayerId;
@@ -74,8 +74,8 @@ export async function joinGame(gameId: string, playerName: string): Promise<{ ga
   };
 
   game.players.push(player2);
-  game.status = 'playing';
-  setNextTurn(game, game.turn);
+  game.status = 'playing'; // Should go to playing to allow setting secrets
+  game.lastActivity = Date.now();
   
   games.set(gameId, game);
 
@@ -104,15 +104,30 @@ export async function setSecret(gameId: string, playerId: string, secret: string
 
   player.secretNumber = secret;
 
-  const allSecretsSet = game.players.every(p => p.secretNumber);
+  const allSecretsSet = game.players.length === 2 && game.players.every(p => p.secretNumber);
   if (allSecretsSet) {
-    game.status = 'playing';
-    setNextTurn(game, game.turn); // Start timer when ready
+    game.status = 'ready'; // New status to indicate secrets are set
+    game.turnExpiresAt = 0; // Stop any running timers
   }
   
+  game.lastActivity = Date.now();
   games.set(gameId, game);
   return game;
 }
+
+export async function startGame(gameId: string, playerId: string): Promise<Game | {error: string}> {
+    const game = games.get(gameId);
+    if (!game) return { error: 'Game not found' };
+    if (game.status !== 'ready') return { error: 'Game is not ready to start.' };
+    const hostId = game.players[0].id;
+    if(playerId !== hostId) return { error: 'Only the host can start the game.'};
+
+    game.status = 'playing';
+    setNextTurn(game, game.turn);
+    games.set(gameId, game);
+    return game;
+}
+
 
 export async function makeGuess(gameId: string, playerId: string, guess: string): Promise<Game | { error: string }> {
     const game = games.get(gameId);
@@ -152,7 +167,8 @@ export async function expireTurn(gameId: string, playerId: string): Promise<Game
     if (!game) return { error: 'Game not found' };
     if (game.status !== 'playing') return { error: 'Game is not active' };
     if (game.turn !== playerId) return { error: 'Not your turn to expire' };
-    if (Date.now() < game.turnExpiresAt) return { error: 'Turn has not expired yet' };
+    if (game.turnExpiresAt > 0 && Date.now() < game.turnExpiresAt) return { error: 'Turn has not expired yet' };
+
 
     const opponent = game.players.find(p => p.id !== playerId);
     if(!opponent) return { error: 'Opponent not found' };
@@ -186,9 +202,10 @@ const performRoundReset = (game: Game): Game => {
     game.status = 'playing';
     game.winnerId = undefined;
     game.resetRequestedBy = null;
+    game.turnExpiresAt = 0;
     const firstPlayerId = game.players[0]?.id;
     if (firstPlayerId) {
-        setNextTurn(game, firstPlayerId);
+        game.turn = firstPlayerId;
     }
     return game;
 }

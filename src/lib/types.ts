@@ -20,7 +20,7 @@ export interface Player {
 export interface Game {
   id:string;
   players: Player[];
-  status: 'waiting' | 'playing' | 'finished';
+  status: 'waiting' | 'playing' | 'finished' | 'ready';
   winnerId?: string;
   turn: string; // Player ID of the current turn
   difficulty: number;
