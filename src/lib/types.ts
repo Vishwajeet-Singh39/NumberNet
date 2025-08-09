@@ -26,4 +26,5 @@ export interface Game {
   difficulty: number;
   resetRequestedBy?: string | null; // ID of player who requested a reset mid-game
   lastActivity: number;
+  turnExpiresAt: number;
 }

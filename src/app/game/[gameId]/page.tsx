@@ -1,9 +1,9 @@
 
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getGame, joinGame, makeGuess, setSecret, resetGame, requestReset, resolveResetRequest, deleteGame } from '@/lib/game-service';
+import { getGame, joinGame, makeGuess, setSecret, resetGame, requestReset, resolveResetRequest, deleteGame, expireTurn } from '@/lib/game-service';
 import type { Game, Player } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Link, Clipboard, User, KeyRound, Target, Hourglass, Trophy, BrainCircuit, RotateCw, Award, BookOpen, AlertTriangle, Home } from 'lucide-react';
 import { GuessHistory } from '@/components/guess-history';
 import { Scoreboard } from '@/components/scoreboard';
+import { Progress } from '@/components/ui/progress';
 
 
 export default function GamePage() {
@@ -28,11 +29,56 @@ export default function GamePage() {
     const [isScoreboardOpen, setIsScoreboardOpen] = useState(false);
     const [isRulesOpen, setIsRulesOpen] = useState(false);
     const [resetRequesterName, setResetRequesterName] = useState<string | null>(null);
+    const [timeLeft, setTimeLeft] = useState(0);
+
+    const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
         const id = localStorage.getItem(`player_id_for_${gameId}`);
         setPlayerId(id);
     }, [gameId]);
+
+    const me = useMemo(() => game?.players.find(p => p.id === playerId), [game, playerId]);
+    const opponent = useMemo(() => game?.players.find(p => p.id !== playerId), [game, playerId]);
+    const isHost = useMemo(() => game?.players[0]?.id === playerId, [game, playerId]);
+    const isMyTurn = useMemo(() => game?.turn === playerId && game.status === 'playing', [game, playerId]);
+
+    // Timer logic
+    useEffect(() => {
+        if (timerIntervalRef.current) {
+            clearInterval(timerIntervalRef.current);
+        }
+
+        if (isMyTurn && game && game.turnExpiresAt > 0) {
+            const updateTimer = () => {
+                const now = Date.now();
+                const newTimeLeft = Math.max(0, game.turnExpiresAt - now);
+                setTimeLeft(newTimeLeft);
+
+                if (newTimeLeft === 0) {
+                    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+                    toast({
+                        title: "Time's up!",
+                        description: `Your turn was skipped. It's now ${opponent?.name}'s turn.`,
+                        variant: 'destructive'
+                    });
+                    if(playerId) expireTurn(gameId, playerId);
+                }
+            };
+            
+            updateTimer(); // Initial call
+            timerIntervalRef.current = setInterval(updateTimer, 1000);
+        } else {
+            setTimeLeft(0);
+        }
+
+        return () => {
+            if (timerIntervalRef.current) {
+                clearInterval(timerIntervalRef.current);
+            }
+        };
+    }, [isMyTurn, game, gameId, playerId, opponent?.name, toast]);
 
     useEffect(() => {
         if (!gameId) return;
@@ -55,7 +101,8 @@ export default function GamePage() {
         };
         fetchGame();
 
-        const interval = setInterval(async () => {
+        if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = setInterval(async () => {
             try {
                 const updatedGame = await getGame(gameId);
                 if (updatedGame) {
@@ -63,22 +110,20 @@ export default function GamePage() {
                 } else {
                     toast({ title: "Game Over", description: "The game session has ended." });
                     router.push('/');
-                    clearInterval(interval); 
+                    if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current); 
                 }
             } catch (error) {
                 console.error("Failed to poll for game state:", error);
             }
         }, 2000); // Poll every 2 seconds
 
-        return () => clearInterval(interval);
+        return () => {
+            if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+            if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+        };
     }, [gameId, router, toast]);
 
-    const me = useMemo(() => game?.players.find(p => p.id === playerId), [game, playerId]);
-    const opponent = useMemo(() => game?.players.find(p => p.id !== playerId), [game, playerId]);
-    const isHost = useMemo(() => game?.players[0]?.id === playerId, [game, playerId]);
-
      useEffect(() => {
-        // Show reset request only if game is playing and this player is the host
         if (game?.status === 'playing' && game?.resetRequestedBy && isHost && game.resetRequestedBy !== playerId) {
             const requester = game.players.find(p => p.id === game.resetRequestedBy);
             setResetRequesterName(requester?.name || 'Your opponent');
@@ -261,6 +306,22 @@ export default function GamePage() {
         );
     }
 
+    const renderTimer = () => {
+        if (!isMyTurn || timeLeft <= 0 || !game) return null;
+        
+        const totalDuration = Math.max(10, game.difficulty * 3) * 1000;
+        const progress = (timeLeft / totalDuration) * 100;
+
+        return (
+            <div className="flex flex-col gap-2 mt-4">
+                <div className="flex justify-between items-center text-sm font-medium">
+                     <span className="text-primary">Your Turn!</span>
+                     <span className="text-muted-foreground">Time left: {Math.ceil(timeLeft / 1000)}s</span>
+                </div>
+                 <Progress value={progress} className="w-full h-2" />
+            </div>
+        )
+    }
 
     return (
         <main className="container mx-auto p-4 md:p-8 min-h-screen flex flex-col">
@@ -345,7 +406,7 @@ export default function GamePage() {
                     <CardHeader>
                         <CardTitle className="flex items-center justify-between">
                             <span><User className="inline-block mr-2" />{me.name} (You)</span>
-                            {game?.turn === me.id && game.status === 'playing' && <span className="text-sm font-medium text-primary">Your Turn</span>}
+                            {isMyTurn && <span className="text-sm font-medium text-primary">Your Turn</span>}
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -363,11 +424,18 @@ export default function GamePage() {
                                     <p className="text-sm font-medium flex items-center gap-2"><Target />Your Guesses</p>
                                     <GuessHistory guesses={me.guesses} />
                                 </div>
-                                {game?.turn === me.id && game.status === 'playing' && opponent?.secretNumber && (
-                                     <div className="flex gap-2">
-                                        <Input placeholder={`Guess ${opponent.name}'s number...`} value={inputValue} onChange={e => setInputValue(e.target.value)} maxLength={game?.difficulty} />
-                                        <Button onClick={handleMakeGuess}>Guess</Button>
-                                    </div>
+                                {isMyTurn && opponent?.secretNumber ? (
+                                     <>
+                                        <div className="flex gap-2">
+                                            <Input placeholder={`Guess ${opponent.name}'s number...`} value={inputValue} onChange={e => setInputValue(e.target.value)} maxLength={game?.difficulty} />
+                                            <Button onClick={handleMakeGuess}>Guess</Button>
+                                        </div>
+                                        {renderTimer()}
+                                     </>
+                                ) : (
+                                    isMyTurn && !opponent?.secretNumber && (
+                                         <p className="text-sm text-muted-foreground flex items-center justify-center gap-2 p-4 bg-muted/50 rounded-md"><Hourglass className="animate-spin" />Waiting for {opponent?.name} to set their secret...</p>
+                                    )
                                 )}
                             </div>
                         )}
@@ -425,4 +493,3 @@ export default function GamePage() {
         </main>
     );
 }
-

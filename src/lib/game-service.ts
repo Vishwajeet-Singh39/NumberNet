@@ -12,6 +12,14 @@ const createId = () => Math.random().toString(36).substring(2, 9);
 const createPlayerId = () => `player_${createId()}`;
 const createGameId = () => `game_${createId()}`;
 
+const getTurnDuration = (difficulty: number) => Math.max(10, difficulty * 3) * 1000; // in milliseconds
+
+const setNextTurn = (game: Game, nextPlayerId: string) => {
+    game.turn = nextPlayerId;
+    game.turnExpiresAt = Date.now() + getTurnDuration(game.difficulty);
+    game.lastActivity = Date.now();
+};
+
 
 // --- Game Management Functions ---
 
@@ -34,6 +42,7 @@ export async function createGame(player1Name: string, difficulty: number): Promi
     difficulty: difficulty,
     resetRequestedBy: null,
     lastActivity: Date.now(),
+    turnExpiresAt: 0,
   };
 
   games.set(gameId, newGame);
@@ -66,7 +75,7 @@ export async function joinGame(gameId: string, playerName: string): Promise<{ ga
 
   game.players.push(player2);
   game.status = 'playing';
-  game.lastActivity = Date.now();
+  setNextTurn(game, game.turn);
   
   games.set(gameId, game);
 
@@ -98,9 +107,9 @@ export async function setSecret(gameId: string, playerId: string, secret: string
   const allSecretsSet = game.players.every(p => p.secretNumber);
   if (allSecretsSet) {
     game.status = 'playing';
+    setNextTurn(game, game.turn); // Start timer when ready
   }
   
-  game.lastActivity = Date.now();
   games.set(gameId, game);
   return game;
 }
@@ -111,6 +120,7 @@ export async function makeGuess(gameId: string, playerId: string, guess: string)
 
     if (game.status !== 'playing') return { error: 'Game is not active.' };
     if (game.turn !== playerId) return { error: "It's not your turn." };
+    if (Date.now() > game.turnExpiresAt) return { error: "Your turn has expired."}
     if (guess.length !== game.difficulty || !/^\d+$/.test(guess)) {
       return { error: `Guess must be a ${game.difficulty}-digit number.` };
     }
@@ -128,14 +138,30 @@ export async function makeGuess(gameId: string, playerId: string, guess: string)
         game.status = 'finished';
         game.winnerId = playerId;
         currentPlayer.score += 1;
+        game.turnExpiresAt = 0;
     } else {
-        game.turn = opponent.id;
+        setNextTurn(game, opponent.id);
     }
 
-    game.lastActivity = Date.now();
     games.set(gameId, game);
     return game;
 }
+
+export async function expireTurn(gameId: string, playerId: string): Promise<Game | { error: string }> {
+    const game = games.get(gameId);
+    if (!game) return { error: 'Game not found' };
+    if (game.status !== 'playing') return { error: 'Game is not active' };
+    if (game.turn !== playerId) return { error: 'Not your turn to expire' };
+    if (Date.now() < game.turnExpiresAt) return { error: 'Turn has not expired yet' };
+
+    const opponent = game.players.find(p => p.id !== playerId);
+    if(!opponent) return { error: 'Opponent not found' };
+
+    setNextTurn(game, opponent.id);
+    games.set(gameId, game);
+    return game;
+}
+
 
 export async function requestReset(gameId: string, playerId: string): Promise<Game | {error: string}> {
   const game = games.get(gameId);
@@ -160,8 +186,10 @@ const performRoundReset = (game: Game): Game => {
     game.status = 'playing';
     game.winnerId = undefined;
     game.resetRequestedBy = null;
-    game.turn = game.players[0].id; 
-    game.lastActivity = Date.now();
+    const firstPlayerId = game.players[0]?.id;
+    if (firstPlayerId) {
+        setNextTurn(game, firstPlayerId);
+    }
     return game;
 }
 
