@@ -12,7 +12,7 @@ const createId = () => Math.random().toString(36).substring(2, 9);
 const createPlayerId = () => `player_${createId()}`;
 const createGameId = () => `game_${createId()}`;
 
-const getTurnDuration = (difficulty: number) => Math.max(10000, difficulty * 3 * 1000); // in milliseconds
+const getTurnDuration = (difficulty: number) => 10000+(difficulty * 3 * 1000); // in milliseconds
 
 const setNextTurn = (game: Game, nextPlayerId: string) => {
     game.turn = nextPlayerId;
